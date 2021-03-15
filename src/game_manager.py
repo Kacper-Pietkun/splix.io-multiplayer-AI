@@ -2,6 +2,7 @@ import pygame
 from window import Window
 from board import Board
 from player import Player
+import constant
 
 
 class GameManager:
@@ -9,8 +10,8 @@ class GameManager:
         pygame.init()
         self.max_fps = max_fps
         self.clock = pygame.time.Clock()
-        self.window = Window(800, 800)
-        self.board = Board(50, 50)
+        self.window = Window(constant.WINDOW_WIDTH, constant.WINDOW_HEIGHT)
+        self.board = Board(constant.BOARD_WIDTH, constant.BOARD_HEIGHT, constant.BOARD_PLAYER_SPAWN_SIZE)
         self.players = [Player(self.board)]
 
     def start_game(self):

@@ -1,20 +1,25 @@
+import constant
+
+
 class Board:
-    def __init__(self, width, height):
+    def __init__(self, width, height, player_spawn_size):
         self.width = width
         self.height = height
-        self.player_spawn_size = 5
+        self.player_spawn_size = player_spawn_size
         self.tiles = []
         for i in range(0, width):
             self.tiles.append([])
             for j in range(0, height):
                 self.tiles[i].append(self.Tile())
 
+    # Board consists of a large number of tiles
     class Tile:
         def __init__(self):
             self.owner_id = 0  # neutral tile, doesn't belong to any player
-            self.color = (77, 77, 77)
+            self.color = constant.BOARD_TILE_NEUTRAL_COLOR
             self.is_trail = False
 
+    # Every time players draws a position for his spawn, it needs to be checked whether that position is available
     def can_create_player_spawn(self, x, y):
         for i in range(x, x + self.player_spawn_size):
             for j in range(y, y + self.player_spawn_size):
@@ -22,6 +27,7 @@ class Board:
                     return False
         return True
 
+    # After checking whether drawn position is available, player's spawn can be spawned on that area
     def create_player_spawn(self, player_id, player_tile_color, x, y):
         for i in range(x, x + self.player_spawn_size):
             for j in range(y, y + self.player_spawn_size):
@@ -31,13 +37,13 @@ class Board:
     def leave_a_trail(self, player_id, trail_color, x_pos, y_pos):
         x_pos = int(x_pos)
         y_pos = int(y_pos)
-        if self.tiles[x_pos][y_pos].owner_id != player_id and self.tiles[x_pos][y_pos].is_trail == False:
+        if self.tiles[x_pos][y_pos].owner_id != player_id and not self.tiles[x_pos][y_pos].is_trail:
             self.tiles[x_pos][y_pos].owner_id = player_id
             self.tiles[x_pos][y_pos].color = trail_color
             self.tiles[x_pos][y_pos].is_trail = True
             return True
-        if self.tiles[x_pos][y_pos] != player_id and self.tiles[x_pos][y_pos].is_trail == True:
-            # player should be dead because, he crossed trail of the other player
+        if self.tiles[x_pos][y_pos].owner_id != player_id and self.tiles[x_pos][y_pos].is_trail:
+            # This player kills another player by crossing another player's trail
             pass
         return False
 
