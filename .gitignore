@@ -1,0 +1,5 @@
+# Pycharm IDE folder
+.idea/
+
+# virtualenv
+venv/
