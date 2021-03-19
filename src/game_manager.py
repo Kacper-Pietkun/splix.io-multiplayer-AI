@@ -12,7 +12,7 @@ class GameManager:
         self.clock = pygame.time.Clock()
         self.window = Window(constant.WINDOW_WIDTH, constant.WINDOW_HEIGHT)
         self.board = Board(constant.BOARD_WIDTH, constant.BOARD_HEIGHT, constant.BOARD_PLAYER_SPAWN_SIZE)
-        self.players = [Player(self.board)]
+        self.players = [Player(self.board, self)]
 
     def start_game(self):
         self.game_loop()
@@ -24,9 +24,15 @@ class GameManager:
             self.clock.tick(self.max_fps)
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    self.players[0].change_direction(event.key)
+                    for i in range(0, len(self.players)):
+                        self.players[i].change_direction(event.key)
                 if event.type == pygame.QUIT:
                     run = False
             for i in range(0, len(self.players)):
                 self.players[i].movement()
             self.window.print_window(self.board, self.players)
+
+    def kill_player(self, player_id):
+        for player in self.players:
+            if player.id == player_id:
+                player.die()
