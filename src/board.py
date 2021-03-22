@@ -49,9 +49,13 @@ class Board:
 
     # We create an array which will contain a fragment of the original tiles array, but it will store only player's id
     # Thanks to this array, we will be able to determine which tiles should be colored, when player will
-    # connect a trail to his zone
+    # connect a trail to his safe zone
+    # returns tuple of two elements:
+    # 1st array which identify tiles that are new to the player's safe zone
+    # 2nd set of indices of players that loose some of their safe zone because of that player
     def fill_zone(self, player):
         help_tiles = []
+        indices_array = set()
         # + 3 because we want to have 1 column and 1 row padding on each side of the array
         for i in range(0, player.max_pos_x - player.min_pos_x + 3):
             help_tiles.append([])
@@ -70,8 +74,10 @@ class Board:
         for i in range(1, player.max_pos_x - player.min_pos_x + 2):
             for j in range(1, player.max_pos_y - player.min_pos_y + 2):
                 if help_tiles[i][j] != -1:
+                    indices_array.add(self.tiles[player.min_pos_x + i - 1][player.min_pos_y + j - 1].owner_id)
                     self.change_tile_information(player, player.min_pos_x + i - 1,
                                                  player.min_pos_y + j - 1, is_trail=False)
+        return help_tiles, indices_array
 
     def start_filling_array(self, help_tiles, player_id, x, y):
         stack_positions = [(x, y)]

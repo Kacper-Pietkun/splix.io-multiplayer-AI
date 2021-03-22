@@ -8,8 +8,8 @@ class Player:
     players_number = 0  # static counter
 
     def __init__(self, board, game_manager):
-        self.players_number = self.players_number + 1
-        self.id = self.players_number  # First player starts with id = 1, because id = 0 is reserved for neutral state
+        Player.players_number = Player.players_number + 1
+        self.id = Player.players_number  # First player starts with id = 1, because id = 0 is reserved for neutral state
         self.board = board
         self.game_manager = game_manager
         self.tile_color = (randint(50, 205), randint(50, 205), randint(50, 205))
@@ -19,12 +19,14 @@ class Player:
         self.direction = constant.DIRECTION_NONE
         self.last_pressed_key = None
         self.is_out_of_safe_zone = False
+        self.just_left_safe_zone = False
         # We need max positions to determine the smallest possible area for a flood fill algorithm
-        self.min_pos_y = int(self.y)
-        self.max_pos_y = int(self.y + self.board.player_spawn_size - 1)
-        self.min_pos_x = int(self.x)
-        self.max_pos_x = int(self.x + self.board.player_spawn_size - 1)
+        self.min_pos_y = int(self.y - int(self.board.player_spawn_size / 2))
+        self.max_pos_y = int(self.y + int(self.board.player_spawn_size / 2))
+        self.min_pos_x = int(self.x - int(self.board.player_spawn_size / 2))
+        self.max_pos_x = int(self.x + int(self.board.player_spawn_size / 2))
         self.is_dead = False
+        self.trail_positions = []
 
     # Drawing position for the player until it finds available area
     def spawn_on_random_position(self):
@@ -34,6 +36,9 @@ class Player:
             self.x = randint(0, self.board.width)
             self.y = randint(0, self.board.height)
         self.board.create_player_spawn(self.id, self.tile_color, self.x, self.y)
+        # player's initial position is in the center of his safe zone
+        self.x += int(self.board.player_spawn_size / 2)
+        self.y += int(self.board.player_spawn_size / 2)
         return float(self.x), float(self.y)
 
     # We want to change direction only if player's coordinates are whole numbers
@@ -109,30 +114,43 @@ class Player:
                 self.extend_safe_zone()  # player returned to the safe zone
             if tile.owner_id != self.id and self.is_out_of_safe_zone is False:
                 self.is_out_of_safe_zone = True  # player left safe zone
+                self.just_left_safe_zone = True
 
     def die(self):
         if self.is_dead is False:
             self.board.clear_player_tiles(self)
-            self.game_manager.players.remove(self)
             self.is_dead = True
 
     def kill_other_player(self, killed_player_id):
         if self.is_dead is False:
-            self.board.clear_player_tiles(killed_player_id)
-            self.game_manager.players.kill_player(killed_player_id)
+            self.game_manager.kill_player(killed_player_id)
 
     # trigger flood fill algorithm
     def extend_safe_zone(self):
         if self.is_dead is False:
-            self.board.fill_zone(self)
+            _, players_that_lost_zone = self.board.fill_zone(self)
+            self.game_manager.update_players_safe_zone(players_that_lost_zone)
             self.is_out_of_safe_zone = False
+            self.just_left_safe_zone = False
 
     # If player has moved to the next tile, he should leave a trial (paint adequate tile)
     def leave_trail(self):
         if self.x.is_integer() and self.y.is_integer() and self.is_out_of_safe_zone is True and self.is_dead is False:
             pos_x = int(self.x)
             pos_y = int(self.y)
+            tile = self.board.get_tile_information(pos_x, pos_y)
+            player_index = set()
+            player_index.add(tile.owner_id)
             self.board.change_tile_information(self, pos_x, pos_y, is_trail=True)
+            self.trail_positions.append((pos_x, pos_y))
+            if tile.owner_id != constant.PLAYER_NEUTRAL_INDEX:
+                self.game_manager.update_players_safe_zone(player_index)
+
+    def update_safe_zone(self):
+        pass
+
+    def determine_next_move(self):
+        pass
 
 
 
