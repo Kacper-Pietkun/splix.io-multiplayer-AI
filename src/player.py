@@ -41,6 +41,10 @@ class Player:
         self.y += int(self.board.player_spawn_size / 2)
         return float(self.x), float(self.y)
 
+    def action(self, pressed_key):
+        self.change_direction(pressed_key)
+        self.movement()
+
     # We want to change direction only if player's coordinates are whole numbers
     # because player can move only on a grid created from tiles
     def change_direction(self, key):

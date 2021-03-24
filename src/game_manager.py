@@ -25,20 +25,20 @@ class GameManager:
         run = True
         while run:
             self.clock.tick(self.max_fps)
+            pressed_key = None
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    for i in range(0, len(self.players)):
-                        self.players[i].change_direction(event.key)
+                    pressed_key = event.key
                 if event.type == pygame.QUIT:
                     run = False
-            self.move_players()
+            self.players_action(pressed_key)
             self.remove_dead_players()
             self.window.print_window(self.board, self.players)
+            print(len(self.players))
 
-    def move_players(self):
+    def players_action(self, pressed_key):
         for i in range(0, len(self.players)):
-            self.players[i].determine_next_move()
-            self.players[i].movement()
+            self.players[i].action(pressed_key)
 
     def remove_dead_players(self):
         self.players = list(filter(lambda x: x.is_dead is False, self.players))

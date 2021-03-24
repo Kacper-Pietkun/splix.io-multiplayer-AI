@@ -17,6 +17,10 @@ class HeuristicBot(Player):
             for j in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
                 self.safe_zone_positions.add((int(self.x) - 1 + i, int(self.y) - 1 + j))
 
+    def action(self, pressed_key):
+        self.determine_next_move()
+        self.movement()
+
     def determine_next_move(self):
         # Possibility of changing direction is allowed only when player's coordinates are whole numbers
         if self.x.is_integer() and self.y.is_integer() and self.is_dead is False:
@@ -134,13 +138,20 @@ class HeuristicBot(Player):
         drawn_direction = randint(constant.DIRECTION_INDEX_START, constant.DIRECTION_INDEX_END)
         next_position = self.get_next_position(drawn_direction, 1)
         while (self.will_that_tile_kill_me(next_position) or
-               self.is_it_opposite_direction(drawn_direction) or
-               self.does_it_collide_with_my_trail((int(self.x), int(self.y)), next_position)) and \
+               (self.is_it_opposite_direction(drawn_direction) and self.is_out_of_safe_zone) or
+               self.does_it_collide_with_my_trail((int(self.x), int(self.y)), next_position) or
+               self.will_go_to_the_enemy(next_position)) and \
                 counter < 20:
             drawn_direction = randint(constant.DIRECTION_INDEX_START, constant.DIRECTION_INDEX_END)
             next_position = self.get_next_position(drawn_direction, 1)
             counter += 1
         return drawn_direction
+
+    def will_go_to_the_enemy(self, next_pos):
+        if self.is_out_of_safe_zone is False and next_pos not in self.safe_zone_positions:
+            if self.get_distance_to_closest_enemy_from_head() < constant.HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION:
+                return True
+        return False
 
     def will_that_tile_kill_me(self, position):
         x, y = position
@@ -182,6 +193,16 @@ class HeuristicBot(Player):
                     distance = sqrt(pow(enemy.x - pos_x, 2) + pow(enemy.y - pos_y, 2))
                     if distance < min_distance:
                         min_distance = distance
+        return min_distance
+
+    # the distance is from enemy only to bot's head
+    def get_distance_to_closest_enemy_from_head(self):
+        min_distance = constant.BOARD_WIDTH * constant.BOARD_HEIGHT
+        for enemy in self.game_manager.players:
+            if self.id != enemy.id:
+                distance = sqrt(pow(enemy.x - self.x, 2) + pow(enemy.y - self.y, 2))
+                if distance < min_distance:
+                    min_distance = distance
         return min_distance
 
     # # returns length of the path in a straight line and also returns the position of the closest tile in the safe zone
