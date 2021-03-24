@@ -2,7 +2,8 @@ import constant
 
 
 class Board:
-    def __init__(self, width, height, player_spawn_size):
+    def __init__(self, game_manager, width, height, player_spawn_size):
+        self.game_manager = game_manager
         self.width = width
         self.height = height
         self.player_spawn_size = player_spawn_size
@@ -70,11 +71,19 @@ class Board:
         # fill array to determine the zone, which was marked by player
         self.start_filling_array(help_tiles, player.id, 0, 0)
 
+        # set -1 on every tile that currently belongs to player's safe zone
+        for i in range(1, player.max_pos_x - player.min_pos_x + 2):
+            for j in range(1, player.max_pos_y - player.min_pos_y + 2):
+                if self.tiles[player.min_pos_x + i - 1][player.min_pos_y + j - 1].owner_id == player.id and \
+                    self.tiles[player.min_pos_x + i - 1][player.min_pos_y + j - 1].is_trail is False:
+                    help_tiles[i][j] = -1
+
         # color rest of the tiles that are in the zone
         for i in range(1, player.max_pos_x - player.min_pos_x + 2):
             for j in range(1, player.max_pos_y - player.min_pos_y + 2):
                 if help_tiles[i][j] != -1:
                     indices_array.add(self.tiles[player.min_pos_x + i - 1][player.min_pos_y + j - 1].owner_id)
+                    self.check_if_player_should_die(player, (player.min_pos_x + i - 1, player.min_pos_y + j - 1))
                     self.change_tile_information(player, player.min_pos_x + i - 1,
                                                  player.min_pos_y + j - 1, is_trail=False)
         return help_tiles, indices_array
@@ -104,3 +113,10 @@ class Board:
                     self.tiles[i][j].owner_id = 0
                     self.tiles[i][j].is_trail = False
                     self.tiles[i][j].color = constant.BOARD_TILE_NEUTRAL_COLOR
+
+    def check_if_player_should_die(self, killer, position):
+        for player in self.game_manager.players:
+            if player.id != killer.id:
+                pos_x, pos_y = position
+                if pos_x == int(player.x) and pos_y == int(player.y):
+                    player.die()

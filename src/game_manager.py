@@ -12,7 +12,7 @@ class GameManager:
         self.max_fps = max_fps
         self.clock = pygame.time.Clock()
         self.window = Window(constant.WINDOW_WIDTH, constant.WINDOW_HEIGHT)
-        self.board = Board(constant.BOARD_WIDTH, constant.BOARD_HEIGHT, constant.BOARD_PLAYER_SPAWN_SIZE)
+        self.board = Board(self, constant.BOARD_WIDTH, constant.BOARD_HEIGHT, constant.BOARD_PLAYER_SPAWN_SIZE)
         self.players = [Player(self.board, self)]
         for i in range(0, no_of_heuristic_bots):
             self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET))
