@@ -1,4 +1,4 @@
-import constant
+from src.constants import constant
 
 
 class Board:

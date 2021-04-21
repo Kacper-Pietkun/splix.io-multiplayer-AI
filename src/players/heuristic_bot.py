@@ -1,21 +1,17 @@
-from player import Player
-import constant
+from src.players.bot import Bot
+from src.constants import constant
 from math import sqrt
 import heapq
 from random import randint
 
 
-class HeuristicBot(Player):
+class HeuristicBot(Bot):
 
     def __init__(self, board, game_manager, safe_offset):
         super().__init__(board, game_manager)
-        self.safe_zone_positions = set()
         self.safe_offset = safe_offset  # used for determining whether player should move back to the safe zone
         self.go_back_to_safe_zone = False
         self.optimal_path = []
-        for i in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
-            for j in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
-                self.safe_zone_positions.add((int(self.x) - 1 + i, int(self.y) - 1 + j))
 
     def action(self, pressed_key):
         self.determine_next_move()
@@ -49,8 +45,11 @@ class HeuristicBot(Player):
 
     # follow path determined by A* algorithm
     def follow_path(self):
-        next_pos = self.optimal_path.pop(0)
-        self.set_direction_for_pos(next_pos)
+        if len(self.optimal_path) != 0:
+            next_pos = self.optimal_path.pop(0)
+            self.set_direction_for_pos(next_pos)
+        else:
+            self.direction = self.get_direction_that_will_not_kill_me()
 
     def set_direction_for_pos(self, pos):
         pos_x, pos_y = pos
@@ -73,7 +72,7 @@ class HeuristicBot(Player):
         heapq.heappush(priority_queue, (smallest_distance, 0, (int(self.x), int(self.y)), None))
         while True:
             if len(priority_queue) == 0:
-                pass
+                return
             (whole_distance, norm_dist, own_pos, parent_pos) = heapq.heappop(priority_queue)
             if self.compare_positions(own_pos, destination_position) is True:
                 heapq.heappush(priority_queue, (whole_distance, norm_dist, own_pos, parent_pos))
@@ -118,6 +117,7 @@ class HeuristicBot(Player):
                 self.optimal_path.remove(own_pos)
                 break
 
+    # compare whether positions are equal or not euqal
     def compare_positions(self, pos_1, pos_2):
         x_1, y_1 = pos_1
         x_2, y_2 = pos_2
@@ -184,17 +184,6 @@ class HeuristicBot(Player):
             return True
         return False
 
-    # the distance is from enemy to any part of this bot's body (it may be head or trail)
-    def get_distance_to_closest_enemy(self):
-        min_distance = constant.BOARD_WIDTH * constant.BOARD_HEIGHT
-        for enemy in self.game_manager.players:
-            if self.id != enemy.id:
-                for (pos_x, pos_y) in self.trail_positions:
-                    distance = sqrt(pow(enemy.x - pos_x, 2) + pow(enemy.y - pos_y, 2))
-                    if distance < min_distance:
-                        min_distance = distance
-        return min_distance
-
     # the distance is from enemy only to bot's head
     def get_distance_to_closest_enemy_from_head(self):
         min_distance = constant.BOARD_WIDTH * constant.BOARD_HEIGHT
@@ -204,34 +193,6 @@ class HeuristicBot(Player):
                 if distance < min_distance:
                     min_distance = distance
         return min_distance
-
-    # # returns length of the path in a straight line and also returns the position of the closest tile in the safe zone
-    def get_distance_to_safe_zone(self):
-        if self.is_out_of_safe_zone is False:
-            return 0
-        min_distance = constant.BOARD_WIDTH + constant.BOARD_HEIGHT
-        closest_position = None
-        for (x, y) in self.safe_zone_positions:
-            distance = sqrt(pow(self.x - x, 2) + pow(self.y - y, 2))
-            if distance < min_distance:
-                min_distance = distance
-                closest_position = (x, y)
-        return min_distance, closest_position
-
-    # trigger flood fill algorithm
-    def extend_safe_zone(self):
-        if self.is_dead is False:
-            new_tiles_information, players_that_lost_zone = self.board.fill_zone(self)
-            self.game_manager.update_players_safe_zone(players_that_lost_zone)
-            self.is_out_of_safe_zone = False
-            self.just_left_safe_zone = False
-            # add positions of new tiles in the safe zone to the array
-            for i in range(1, self.max_pos_x - self.min_pos_x + 2):
-                for j in range(1, self.max_pos_y - self.min_pos_y + 2):
-                    if new_tiles_information[i][j] != -1:
-                        self.safe_zone_positions.add((self.min_pos_x + i - 1, self.min_pos_y + j - 1))
-            # bot moved back to the safe zone so he has no trail
-            self.trail_positions = []
 
     # Basing on the player's current position and given, as a parameter, direction, we get the position of next tile
     # that player will move to
@@ -247,12 +208,3 @@ class HeuristicBot(Player):
         elif assumed_direction == constant.DIRECTION_LEFT:
             next_x -= number_of_turns
         return next_x, next_y
-
-    def update_safe_zone(self):
-        self.safe_zone_positions = set(filter(lambda el: (self.board.get_tile_information(el[0], el[1]).owner_id ==
-                                                          self.id), self.safe_zone_positions))
-        pass
-
-    def change_direction(self, key):
-        pass
-

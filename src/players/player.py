@@ -1,7 +1,6 @@
 from random import randint
 from operator import add
-import constant
-import pygame
+from src.constants import constant
 
 
 class Player:
@@ -27,6 +26,10 @@ class Player:
         self.max_pos_x = int(self.x + int(self.board.player_spawn_size / 2))
         self.is_dead = False
         self.trail_positions = []
+        self.safe_zone_positions = set()
+        for i in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
+            for j in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
+                self.safe_zone_positions.add((int(self.x) - 1 + i, int(self.y) - 1 + j))
 
     # Drawing position for the player until it finds available area
     def spawn_on_random_position(self):
@@ -41,36 +44,12 @@ class Player:
         self.y += int(self.board.player_spawn_size / 2)
         return float(self.x), float(self.y)
 
+    # abstract method
     def action(self, pressed_key):
-        self.change_direction(pressed_key)
-        self.movement()
-
-    # We want to change direction only if player's coordinates are whole numbers
-    # because player can move only on a grid created from tiles
-    def change_direction(self, key):
-        if key == pygame.K_UP or key == pygame.K_DOWN:
-            if not self.x.is_integer():
-                self.last_pressed_key = key
-                return False
-            elif key == pygame.K_UP:
-                self.direction = constant.DIRECTION_UP
-            else:
-                self.direction = constant.DIRECTION_DOWN
-        elif key == pygame.K_LEFT or key == pygame.K_RIGHT:
-            if not self.y.is_integer():
-                self.last_pressed_key = key
-                return False
-            elif key == pygame.K_LEFT:
-                self.direction = constant.DIRECTION_LEFT
-            else:
-                self.direction = constant.DIRECTION_RIGHT
-        return True
+        pass
 
     # Change player's position
     def movement(self):
-        if self.last_pressed_key is not None:
-            if self.change_direction(self.last_pressed_key):
-                self.last_pressed_key = None
         if self.direction == constant.DIRECTION_UP:
             self.y = self.y - constant.PLAYER_DELTA_MOVEMENT
         elif self.direction == constant.DIRECTION_RIGHT:
@@ -132,10 +111,17 @@ class Player:
     # trigger flood fill algorithm
     def extend_safe_zone(self):
         if self.is_dead is False:
-            _, players_that_lost_zone = self.board.fill_zone(self)
+            new_tiles_information, players_that_lost_zone = self.board.fill_zone(self)
             self.game_manager.update_players_safe_zone(players_that_lost_zone)
             self.is_out_of_safe_zone = False
             self.just_left_safe_zone = False
+            # add positions of new tiles in the safe zone to the array
+            for i in range(1, self.max_pos_x - self.min_pos_x + 2):
+                for j in range(1, self.max_pos_y - self.min_pos_y + 2):
+                    if new_tiles_information[i][j] != -1:
+                        self.safe_zone_positions.add((self.min_pos_x + i - 1, self.min_pos_y + j - 1))
+            # bot moved back to the safe zone so he has no trail
+            self.trail_positions = []
 
     # If player has moved to the next tile, he should leave a trial (paint adequate tile)
     def leave_trail(self):
@@ -151,10 +137,8 @@ class Player:
                 self.game_manager.update_players_safe_zone(player_index)
 
     def update_safe_zone(self):
-        pass
-
-    def determine_next_move(self):
-        pass
+        self.safe_zone_positions = set(filter(lambda el: (self.board.get_tile_information(el[0], el[1]).owner_id ==
+                                                          self.id), self.safe_zone_positions))
 
 
 
