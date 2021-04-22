@@ -10,7 +10,7 @@ class HeuristicBot(Bot):
     def __init__(self, board, game_manager, safe_offset):
         super().__init__(board, game_manager)
         self.safe_offset = safe_offset  # used for determining whether player should move back to the safe zone
-        self.go_back_to_safe_zone = False
+        self.is_following_a_path = False
         self.optimal_path = []
 
     def action(self, pressed_key):
@@ -20,28 +20,48 @@ class HeuristicBot(Bot):
     def determine_next_move(self):
         # Possibility of changing direction is allowed only when player's coordinates are whole numbers
         if self.x.is_integer() and self.y.is_integer() and self.is_dead is False:
-            if self.is_out_of_safe_zone is False:
+            distance_to_kill, killing_position = self.get_distance_to_closest_enemy_trail()
+            dist_to_safe_tile, safe_tile_pos = self.get_distance_to_safe_zone()
+            dist_to_enemy = self.get_distance_to_closest_enemy()
+
+            self.check_followed_path()
+            if self.is_following_a_path:
+                self.follow_path()
+            elif distance_to_kill < dist_to_enemy and dist_to_safe_tile < constant.HEURISTIC_BOT_FIND_KILL_OFFSET and \
+                    distance_to_kill < constant.HEURISTIC_BOT_KILL_RANGE:
+                self.determine_path_to_the_tile(killing_position, distance_to_kill)
+                self.follow_path()
+                self.is_following_a_path = True
+            elif self.is_out_of_safe_zone is False:
                 self.direction = self.get_direction_that_will_not_kill_me()
-                self.go_back_to_safe_zone = False
             elif self.just_left_safe_zone is True:  # It prevents bot from doing an illegal move
                 self.direction = self.get_direction_that_will_not_kill_me()
                 self.just_left_safe_zone = False
             else:
-                dist_to_enemy = self.get_distance_to_closest_enemy()
-                dist_to_safe_tile, safe_tile_pos = self.get_distance_to_safe_zone()
                 if dist_to_safe_tile + self.safe_offset >= dist_to_enemy or \
                         len(self.trail_positions) > constant.HEURISTIC_BOT_WANDER_LENGTH:
-                    # move back to the safe zone
-                    if self.go_back_to_safe_zone is False or len(self.optimal_path) == 0:
-                        self.determine_path_to_the_tile(safe_tile_pos, dist_to_safe_tile)
-                        self.go_back_to_safe_zone = True
-                        self.follow_path()
-                    else:
-                        self.follow_path()
+                    self.determine_path_to_the_tile(safe_tile_pos, dist_to_safe_tile)
+                    self.follow_path()
+                    self.is_following_a_path = True
                 else:
                     # wander around unsafe zone
                     self.direction = self.get_direction_that_will_not_kill_me()
-                    self.go_back_to_safe_zone = False
+
+    # if bot follows path to kill other bot, check if the tile is still the trail of that bot's
+    # if bot follows path to go back to the safe zone, check if the tile is still in his safe zone
+    def check_followed_path(self):
+        if len(self.optimal_path) > 0:
+            dest_x, dest_y = self.optimal_path[-1]
+            dest_tile = self.board.get_tile_information(dest_x, dest_y)
+            if dest_tile.owner_id == self.id and dest_tile.is_trail:
+                return
+            if dest_tile.owner_id != self.id and dest_tile.is_trail:
+                return
+
+            # if the above conditions are not satisfied then stop following that path
+            self.is_following_a_path = False
+            self.optimal_path = []
+
 
     # follow path determined by A* algorithm
     def follow_path(self):
@@ -50,6 +70,7 @@ class HeuristicBot(Bot):
             self.set_direction_for_pos(next_pos)
         else:
             self.direction = self.get_direction_that_will_not_kill_me()
+            self.is_following_a_path = False
 
     def set_direction_for_pos(self, pos):
         pos_x, pos_y = pos
@@ -193,6 +214,19 @@ class HeuristicBot(Bot):
                 if distance < min_distance:
                     min_distance = distance
         return min_distance
+
+    # Used for determining whether this bot should kill another one
+    def get_distance_to_closest_enemy_trail(self):
+        min_distance = constant.BOARD_WIDTH * constant.BOARD_HEIGHT
+        closest_position = None
+        for enemy in self.game_manager.players:
+            if self.id != enemy.id:
+                for (trail_x, trail_y) in enemy.trail_positions:
+                    distance = sqrt(pow(trail_x - self.x, 2) + pow(trail_y - self.y, 2))
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_position = (trail_x, trail_y)
+        return min_distance, closest_position
 
     # Basing on the player's current position and given, as a parameter, direction, we get the position of next tile
     # that player will move to

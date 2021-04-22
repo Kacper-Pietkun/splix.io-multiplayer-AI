@@ -1,8 +1,8 @@
-# DO NOT CHANGE
+# DO NOT CHANGE IF YOU DON't NEED TO
 # **********************************************************************************************************************
 # Game
 GAME_MAX_FPS = 60
-HEURISTIC_BOTS_NUMBER = 60
+HEURISTIC_BOTS_NUMBER = 1
 
 # Directions
 DIRECTION_NONE = 0
@@ -28,9 +28,11 @@ PLAYER_DELTA_MOVEMENT = 0.125  # It must be: "< 1","finite binary expansion", # 
 PLAYER_NEUTRAL_INDEX = 0
 
 # Heuristic bot
-HEURISTIC_BOT_SAFE_OFFSET = 5
-HEURISTIC_BOT_WANDER_LENGTH = 5
-HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5
+HEURISTIC_BOT_KILL_RANGE = 6  # bot will not go further than this value specifies, in order to kill another bot
+HEURISTIC_BOT_FIND_KILL_OFFSET = 2  # Bot will search for other bots that he can kill in his safe zone or 2 tile away
+HEURISTIC_BOT_SAFE_OFFSET = 5  # variable that helps to decide whether bot is in danger and should go to the safe zone
+HEURISTIC_BOT_WANDER_LENGTH = 5  # If bot's trail is longer than given value, he goes back to the safe zone
+HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide whether bot is safe to leave the safe zone
 # **********************************************************************************************************************
 
 
@@ -39,6 +41,6 @@ HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5
 # Neat bot
 TRAINING_MAX_FPS = 0  # zero means it will be as fast as it can
 VISUALIZE_TRAINING = True  # You can visualize training, however it slows down the whole process
-LOAD_POPULATION = True  # False - start learning from zero, True - load saved population from file
+LOAD_POPULATION = False  # False - start learning from zero, True - load saved population from file
 # size of the population must be set in the neat.conf file
 # **********************************************************************************************************************

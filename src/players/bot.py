@@ -29,6 +29,9 @@ class Bot(Player):
         min_distance = constant.BOARD_WIDTH * constant.BOARD_HEIGHT
         for enemy in self.game_manager.players:
             if self.id != enemy.id:
+                distance = sqrt(pow(enemy.x - self.x, 2) + pow(enemy.y - self.y, 2))
+                if distance < min_distance:
+                    min_distance = distance
                 for (pos_x, pos_y) in self.trail_positions:
                     distance = sqrt(pow(enemy.x - pos_x, 2) + pow(enemy.y - pos_y, 2))
                     if distance < min_distance:
