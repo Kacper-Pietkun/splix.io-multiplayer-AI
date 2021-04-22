@@ -4,7 +4,7 @@ from src.management.neat_manager import NeatManager
 from src.constants import constant
 import pickle
 
-import_population = True
+import_population = constant.LOAD_POPULATION
 # Make it True to import trained population
 # Needs "../trained/population.dat" as a program parameter
 
@@ -23,5 +23,5 @@ if __name__ == '__main__':
         pop = load_object(path)
         print("Reading population from: " + sys.argv[1])
 
-    neat_manager = NeatManager(pop, constant.TRAINING_MAX_FPS, True)
+    neat_manager = NeatManager(pop, constant.TRAINING_MAX_FPS, constant.VISUALIZE_TRAINING)
     neat_manager.run()
