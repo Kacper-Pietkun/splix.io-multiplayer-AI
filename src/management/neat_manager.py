@@ -1,12 +1,13 @@
 import os
 import neat
 import pygame
-from src.gui.window import Window
-from src.board import Board
+import pickle
+import src.gui.visualize as visualize
+from math import inf
 from src.constants import constant
 from src.players.neat_bot import NeatBot
+from src.players.heuristic_bot import HeuristicBot
 from src.management.manager import Manager
-import pickle
 
 
 class NeatManager(Manager):
@@ -56,7 +57,11 @@ class NeatManager(Manager):
         for genome_id, genome in genomes:
             genome.fitness = 0  # start with fitness level of 0
             net = neat.nn.FeedForwardNetwork.create(genome, self.config)
-            self.players.append(NeatBot(self.board, self, genome, net))  # tutaj poprawić, ale tworzymy neat bota
+            self.players.append(NeatBot(self.board, self, genome, net))
+
+        # Add heuristic bots to the training process
+        for i in range(0, constant.NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING):
+            self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET))
 
         run = True
         while run:
@@ -64,15 +69,50 @@ class NeatManager(Manager):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
+            if self.are_there_any_neat_bots() is False:
+                break
             self.players_action(None)
             self.remove_dead_players()
             if self.print_game:
                 self.window.print_window(self.board, self.players)
-            if len(self.players) == 0:
-                break
+            # print("NEAT BOTS LEFT: " + str(self.number_of_neat_bots()))
 
+        if constant.SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME:
+            self.draw_best_neural_network(genomes)
+
+        self.kill_em_all()
         if self.gen % 10 == 0:
             local_dir = os.path.dirname(__file__)
             path = os.path.join(local_dir, '../../resources/population.dat')
             self.save_object(self.p, path)
             print("Exporting population")
+
+    # When we use heuristic bots during the training, we need to make sure that neat bots were not eliminated
+    # When neat bots are eliminated then end this generation
+    def are_there_any_neat_bots(self):
+        for player in self.players:
+            if isinstance(player, NeatBot):
+                return True
+        return False
+
+    def number_of_neat_bots(self):
+        number = 0
+        for player in self.players:
+            if isinstance(player, NeatBot):
+                number += 1
+        return number
+
+    # Used to kill all the heuristic bots at the end of the generation
+    def kill_em_all(self):
+        for player in self.players:
+            player.die()
+        self.remove_dead_players()
+
+    def draw_best_neural_network(self, genomes):
+        best_genome = None
+        best_fitness = -inf
+        for genome_id, genome in genomes:
+            if genome.fitness > best_fitness:
+                best_fitness = genome.fitness
+                best_genome = genome
+        visualize.draw_net(self.config, best_genome)

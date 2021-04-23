@@ -1,7 +1,7 @@
+import heapq
 from src.players.bot import Bot
 from src.constants import constant
 from math import sqrt
-import heapq
 from random import randint
 
 

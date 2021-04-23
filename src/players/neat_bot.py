@@ -1,6 +1,7 @@
 from src.players.bot import Bot
 from src.constants import constant
 from random import randint
+from math import sqrt
 
 
 class NeatBot(Bot):
@@ -19,10 +20,15 @@ class NeatBot(Bot):
             self.zone_time += 1
         else:
             self.zone_time = 0
-        if self.zone_time > 300 and self.zone_time % 20 == 0:
-            self.genome.fitness -= 0.05
-        if self.zone_time > 480 or self.genome.fitness < -100:  # kill the player who doesn't move out of the safe zone
+
+        # kill the player who doesn't move out of the safe zone
+        if (self.zone_time > 200 and self.genome.fitness == 0) or self.zone_time > 1000:
             self.game_manager.kill_player(self.id)
+
+        # encourage bot to move out of the safe zone
+        if self.just_left_safe_zone is True:
+            self.genome.fitness += 0.05
+            self.just_left_safe_zone = False
 
         self.determine_next_move()
         self.movement()
@@ -31,33 +37,28 @@ class NeatBot(Bot):
         # Possibility of changing direction is allowed only when player's coordinates are whole numbers
         if self.x.is_integer() and self.y.is_integer() and self.is_dead is False:
             inputs = self.get_inputs()
-
-            if inputs[4] > 10:             # distance_to_safe_zone
-                self.genome.fitness -= 0.025
-            elif 2 <= inputs[4] <= 10:     # distance_to_safe_zone
-                self.genome.fitness += 0.01
-            if inputs[1] <= 1:              # there is a border at the bot's path
-                self.genome.fitness -= 0.5
-
             outputs = self.net.activate(inputs)
-            direction = outputs[0]
-            if direction <= -0.2:  # turn left
+
+            max_index = 0
+            max_value = -2
+            for i in range(0, len(outputs)):
+                if max_value <= outputs[i]:
+                    max_value = outputs[i]
+                    max_index = i
+
+            if max_index == 0:  # turn left
                 self.direction = self.get_relative_direction(constant.DIRECTION_LEFT)
-            elif direction >= 0.2:  # turn right
+            elif max_index == 1:  # turn right
                 self.direction = self.get_relative_direction(constant.DIRECTION_RIGHT)
-            else:  # don't turn
+            else:  # max_index == 2:  # don't turn
                 self.direction = self.get_relative_direction(constant.DIRECTION_UP)
 
     def get_inputs(self):
-        dist_straight_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_UP)
-        dist_left_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_LEFT)
-        dist_right_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_RIGHT)
-
-        dist_to_closest_enemy = self.get_distance_to_closest_enemy()
         (distance_to_safe_zone, _) = self.get_distance_to_safe_zone()
+        distance_to_closest_wall = self.get_distance_to_closest_wall()
+        dist_to_closest_enemy = self.get_distance_to_closest_enemy()
 
-        return [int(dist_left_border), int(dist_straight_border), int(dist_right_border),
-                int(dist_to_closest_enemy), int(distance_to_safe_zone)]
+        return [distance_to_safe_zone, distance_to_closest_wall, dist_to_closest_enemy]
 
     def get_relative_direction(self, direction):
         # constant.DIRECTION_UP - go straight
@@ -72,16 +73,8 @@ class NeatBot(Bot):
         if direction == constant.DIRECTION_RIGHT:
             return self.direction % 4 + 1
 
-    def get_distance_to_wall_in_relative_direction(self, direction):
-        r_direction = self.get_relative_direction(direction)
-        if r_direction == constant.DIRECTION_UP:
-            return self.y
-        elif r_direction == constant.DIRECTION_LEFT:
-            return self.x
-        elif r_direction == constant.DIRECTION_RIGHT:
-            return self.board.width-self.x
-        else:
-            return self.board.height-self.y
+    def get_distance_to_closest_wall(self):
+        return min(self.x + 1, constant.BOARD_WIDTH - self.x, self.y + 1, constant.BOARD_HEIGHT - self.y)
 
     def extend_safe_zone(self):
         old_tiles_number = len(self.safe_zone_positions)
@@ -89,11 +82,7 @@ class NeatBot(Bot):
         if self.is_dead is False:
             new_tiles_number = len(self.safe_zone_positions)
             delta_tiles_number = new_tiles_number - old_tiles_number
-
-            if delta_tiles_number == 2:
-                self.genome.fitness += 0.025  # increase the fitness
-            if delta_tiles_number > 2:
-                self.genome.fitness += delta_tiles_number * 0.05  # increase the fitness
+            self.genome.fitness += delta_tiles_number
 
     def kill_other_player(self, killed_player_id):
         super().kill_other_player(killed_player_id)
@@ -103,11 +92,9 @@ class NeatBot(Bot):
 
     def die(self):
         if self.is_dead is False:
-            self.genome.fitness -= 1  # punishment for bot
+            self.genome.fitness = sqrt(self.genome.fitness)
+            self.genome.fitness -= 10  # punishment for bot
         super().die()
-
-
-
 
 
 

@@ -1,6 +1,4 @@
 import pygame
-from src.gui.window import Window
-from src.board import Board
 from src.players.human_player import HumanPlayer
 from src.players.heuristic_bot import HeuristicBot
 from src.constants import constant

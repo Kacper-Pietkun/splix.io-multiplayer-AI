@@ -1,8 +1,8 @@
 import os
 import sys
+import pickle
 from src.management.neat_manager import NeatManager
 from src.constants import constant
-import pickle
 
 import_population = constant.LOAD_POPULATION
 # Make it True to import trained population
