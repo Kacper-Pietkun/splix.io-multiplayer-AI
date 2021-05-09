@@ -5,11 +5,11 @@ from src.constants import constant
 
 
 class Manager:
-    def __init__(self, max_fps):
+    def __init__(self, max_fps, window):
         pygame.init()
         self.max_fps = max_fps
         self.clock = pygame.time.Clock()
-        self.window = Window(constant.WINDOW_WIDTH, constant.WINDOW_HEIGHT)
+        self.window = window
         self.board = Board(self, constant.BOARD_WIDTH, constant.BOARD_HEIGHT, constant.BOARD_PLAYER_SPAWN_SIZE)
         self.players = []
 

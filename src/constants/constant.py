@@ -2,7 +2,16 @@
 # **********************************************************************************************************************
 # Game
 GAME_MAX_FPS = 60
-HEURISTIC_BOTS_NUMBER = 1
+BOTS_NUMBER = 60
+GAME_TIME = 5 * 60 * 1000  # 5 min in milliseconds
+MULTIPLAYER_MAX_NO_OF_PLAYERS = 13
+MINIMAL_NUMBER_OF_PLAYER_TO_START = 2
+TITLE = 'Splix.io'
+
+# Single player modes
+MODE_HEURISTIC_BOTS_ONLY = 0
+MODE_NEAT_BOTS_ONLY = 1
+MODE_BOTH_BOTS_ONLY = 2
 
 # Directions
 DIRECTION_NONE = 0
@@ -39,9 +48,9 @@ HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide wh
 # CHANGE IF YOU WANT
 # **********************************************************************************************************************
 # Neat bot
-NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 50  # Add some heuristic bots, that will compete with neat bots while training
-TRAINING_MAX_FPS = 120  # zero means it will be as fast as it can
-VISUALIZE_TRAINING = True  # You can visualize training, however it slows down the whole process
+NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 20  # Add some heuristic bots, that will compete with neat bots while training
+TRAINING_MAX_FPS = 0  # zero means it will be as fast as it can
+VISUALIZE_TRAINING = False  # You can visualize training, however it slows down the whole process
 LOAD_POPULATION = False  # False - start learning from zero, True - load saved population from file
 SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME = True
 # size of the population must be set in the neat.conf file

@@ -1,6 +1,7 @@
-from src.management.game_manager import GameManager
-from src.constants import constant
+import pygame
+from src.gui.main_menu import MainMenu
 
 if __name__ == '__main__':
-    game_manager = GameManager(constant.GAME_MAX_FPS, constant.HEURISTIC_BOTS_NUMBER)
-    game_manager.run()
+    pygame.init()
+    main_menu = MainMenu()
+    main_menu.display_menu()

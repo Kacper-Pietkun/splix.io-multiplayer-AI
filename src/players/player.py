@@ -4,11 +4,9 @@ from src.constants import constant
 
 
 class Player:
-    players_number = 0  # static counter
 
-    def __init__(self, board, game_manager):
-        Player.players_number = Player.players_number + 1
-        self.id = Player.players_number  # First player starts with id = 1, because id = 0 is reserved for neutral state
+    def __init__(self, board, game_manager, player_id):
+        self.id = player_id  # First player starts with id = 1, because id = 0 is reserved for neutral state
         self.board = board
         self.game_manager = game_manager
         self.tile_color = (randint(50, 205), randint(50, 205), randint(50, 205))

@@ -4,10 +4,9 @@ import pygame
 
 
 class HumanPlayer(Player):
-    players_number = 0  # static counter
 
-    def __init__(self, board, game_manager):
-        super().__init__(board, game_manager)
+    def __init__(self, board, game_manager, player_id):
+        super().__init__(board, game_manager, player_id)
 
     def action(self, pressed_key):
         self.change_direction(pressed_key)

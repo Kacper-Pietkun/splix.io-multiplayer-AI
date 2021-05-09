@@ -7,8 +7,8 @@ from random import randint
 
 class HeuristicBot(Bot):
 
-    def __init__(self, board, game_manager, safe_offset):
-        super().__init__(board, game_manager)
+    def __init__(self, board, game_manager, safe_offset, player_id):
+        super().__init__(board, game_manager, player_id)
         self.safe_offset = safe_offset  # used for determining whether player should move back to the safe zone
         self.is_following_a_path = False
         self.optimal_path = []
@@ -21,8 +21,8 @@ class HeuristicBot(Bot):
         # Possibility of changing direction is allowed only when player's coordinates are whole numbers
         if self.x.is_integer() and self.y.is_integer() and self.is_dead is False:
             distance_to_kill, killing_position = self.get_distance_to_closest_enemy_trail()
-            dist_to_safe_tile, safe_tile_pos = self.get_distance_to_safe_zone()
-            dist_to_enemy = self.get_distance_to_closest_enemy()
+            dist_to_safe_tile, safe_tile_pos = self.get_distance_to_safe_zone(self.x, self.y)
+            dist_to_enemy = self.get_distance_to_closest_enemy(self.x, self.y)
 
             self.check_followed_path()
             if self.is_following_a_path:
@@ -39,7 +39,8 @@ class HeuristicBot(Bot):
                 self.just_left_safe_zone = False
             else:
                 if dist_to_safe_tile + self.safe_offset >= dist_to_enemy or \
-                        len(self.trail_positions) > constant.HEURISTIC_BOT_WANDER_LENGTH:
+                        len(self.trail_positions) > constant.HEURISTIC_BOT_WANDER_LENGTH and \
+                        safe_tile_pos is not None:
                     self.determine_path_to_the_tile(safe_tile_pos, dist_to_safe_tile)
                     self.follow_path()
                     self.is_following_a_path = True
@@ -61,7 +62,6 @@ class HeuristicBot(Bot):
             # if the above conditions are not satisfied then stop following that path
             self.is_following_a_path = False
             self.optimal_path = []
-
 
     # follow path determined by A* algorithm
     def follow_path(self):
@@ -172,15 +172,6 @@ class HeuristicBot(Bot):
         if self.is_out_of_safe_zone is False and next_pos not in self.safe_zone_positions:
             if self.get_distance_to_closest_enemy_from_head() < constant.HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION:
                 return True
-        return False
-
-    def will_that_tile_kill_me(self, position):
-        x, y = position
-        if x < 0 or x > constant.BOARD_WIDTH - 1 or y < 0 or y > constant.BOARD_HEIGHT - 1:
-            return True
-        tile = self.board.get_tile_information(x, y)
-        if tile.is_trail is True and tile.owner_id == self.id:
-            return True
         return False
 
     # in order to avoid dead lock we cannot let bot to move to the tiles that collide with the trail

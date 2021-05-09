@@ -11,14 +11,22 @@ from src.management.manager import Manager
 
 
 class NeatManager(Manager):
-    def __init__(self, pop, max_fps, print_game):
-        super().__init__(max_fps)
+    def __init__(self, max_fps, print_game, window):
+        super().__init__(max_fps, window)
         self.gen = 0
         self.print_game = print_game
         self.config = None
         self.best_instance = None
         self.best_fitness = 0
-        self.p = pop
+        self.p = None
+
+    def load_population(self):
+        path = os.path.join(os.path.dirname(__file__), '../../resources/population.dat')
+        try:
+            with open(path, 'rb') as f:
+                self.p = pickle.load(f)
+        except IOError as e:
+            raise
 
     def run(self):
         local_dir = os.path.dirname(__file__)
@@ -54,14 +62,17 @@ class NeatManager(Manager):
         self.gen += 1
         nets = []
 
+        bot_id = 1
         for genome_id, genome in genomes:
             genome.fitness = 0  # start with fitness level of 0
             net = neat.nn.FeedForwardNetwork.create(genome, self.config)
-            self.players.append(NeatBot(self.board, self, genome, net))
+            self.players.append(NeatBot(self.board, self, genome, net, bot_id))
+            bot_id += 1
 
         # Add heuristic bots to the training process
         for i in range(0, constant.NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING):
-            self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET))
+            self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, bot_id))
+            bot_id += 1
 
         run = True
         while run:
@@ -83,9 +94,14 @@ class NeatManager(Manager):
         self.kill_em_all()
         if self.gen % 10 == 0:
             local_dir = os.path.dirname(__file__)
+
             path = os.path.join(local_dir, '../../resources/population.dat')
             self.save_object(self.p, path)
-            print("Exporting population")
+
+            path = os.path.join(local_dir, '../../resources/best_genome.dat')
+            self.save_object(self.get_best_genome(genomes), path)
+
+            print("Exporting population and best genome")
 
     # When we use heuristic bots during the training, we need to make sure that neat bots were not eliminated
     # When neat bots are eliminated then end this generation
@@ -108,11 +124,14 @@ class NeatManager(Manager):
             player.die()
         self.remove_dead_players()
 
-    def draw_best_neural_network(self, genomes):
+    def get_best_genome(self, genomes):
         best_genome = None
         best_fitness = -inf
         for genome_id, genome in genomes:
             if genome.fitness > best_fitness:
                 best_fitness = genome.fitness
                 best_genome = genome
-        visualize.draw_net(self.config, best_genome)
+        return best_genome
+
+    def draw_best_neural_network(self, genomes):
+        visualize.draw_net(self.config, self.get_best_genome(genomes))

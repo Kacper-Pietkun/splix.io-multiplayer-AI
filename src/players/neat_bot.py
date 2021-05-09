@@ -1,12 +1,12 @@
 from src.players.bot import Bot
 from src.constants import constant
 from random import randint
-from math import sqrt
+from math import sqrt, inf
 
 
 class NeatBot(Bot):
-    def __init__(self, board, game_manager, genome, net):
-        super().__init__(board, game_manager)
+    def __init__(self, board, game_manager, genome, net, player_id):
+        super().__init__(board, game_manager, player_id)
         self.genome = genome
         self.net = net
         self.time_alive = 0
@@ -46,35 +46,26 @@ class NeatBot(Bot):
                     max_value = outputs[i]
                     max_index = i
 
-            if max_index == 0:  # turn left
-                self.direction = self.get_relative_direction(constant.DIRECTION_LEFT)
-            elif max_index == 1:  # turn right
-                self.direction = self.get_relative_direction(constant.DIRECTION_RIGHT)
-            else:  # max_index == 2:  # don't turn
-                self.direction = self.get_relative_direction(constant.DIRECTION_UP)
+            # directions are constants from 1 to 4
+            self.direction = max_index + 1
 
     def get_inputs(self):
-        (distance_to_safe_zone, _) = self.get_distance_to_safe_zone()
-        distance_to_closest_wall = self.get_distance_to_closest_wall()
-        dist_to_closest_enemy = self.get_distance_to_closest_enemy()
+        all_next_positions = [(int(self.x), int(self.y - 1)),
+                              (int(self.x), int(self.y + 1)),
+                              (int(self.x + 1), int(self.y)),
+                              (int(self.x - 1), int(self.y))]
+        all_inputs = []
 
-        return [distance_to_safe_zone, distance_to_closest_wall, dist_to_closest_enemy]
+        for next_x, next_y in all_next_positions:
+            will_it_kill_me = self.will_that_tile_kill_me((next_x, next_y))
+            dist_to_enemy = 0 if will_it_kill_me else self.get_distance_to_closest_enemy(next_x, next_y)
+            dist_to_wall = 0 if will_it_kill_me else self.get_distance_to_closest_wall(next_x, next_y)
+            dist_to_safe_zone, _ = inf, inf if will_it_kill_me else self.get_distance_to_safe_zone(next_x, next_y)
+            all_inputs.extend([will_it_kill_me, dist_to_safe_zone])
+        return all_inputs
 
-    def get_relative_direction(self, direction):
-        # constant.DIRECTION_UP - go straight
-        # constant.DIRECTION_LEFT - go left
-        # constant.DIRECTION_RIGHT - go right
-        if self.direction == constant.DIRECTION_NONE:
-            self.direction = randint(1, 4)
-        if direction == constant.DIRECTION_UP:
-            return self.direction
-        if direction == constant.DIRECTION_LEFT:
-            return (self.direction - 1 + constant.DIRECTION_LEFT - 1) % 4 + 1
-        if direction == constant.DIRECTION_RIGHT:
-            return self.direction % 4 + 1
-
-    def get_distance_to_closest_wall(self):
-        return min(self.x + 1, constant.BOARD_WIDTH - self.x, self.y + 1, constant.BOARD_HEIGHT - self.y)
+    def get_distance_to_closest_wall(self, my_x, my_y):
+        return min(my_x + 1, constant.BOARD_WIDTH - my_x, my_y + 1, constant.BOARD_HEIGHT - my_y)
 
     def extend_safe_zone(self):
         old_tiles_number = len(self.safe_zone_positions)
@@ -92,7 +83,8 @@ class NeatBot(Bot):
 
     def die(self):
         if self.is_dead is False:
-            self.genome.fitness = sqrt(self.genome.fitness)
+            if self.genome.fitness >= 0:
+                self.genome.fitness = sqrt(self.genome.fitness)
             self.genome.fitness -= 10  # punishment for bot
         super().die()
 
