@@ -8,6 +8,8 @@ from src.constants import constant
 from src.players.neat_bot import NeatBot
 from src.players.heuristic_bot import HeuristicBot
 from src.management.manager import Manager
+from random import randint
+from operator import add
 
 
 class NeatManager(Manager):
@@ -72,8 +74,15 @@ class NeatManager(Manager):
         # Add heuristic bots to the training process
         for i in range(0, constant.NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING):
             self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, bot_id))
+            # change color of heuristic bots to distinguish them from neat bots
+            white_shade = randint(200, 230)
+            self.players[-1].tile_color = (white_shade, white_shade, white_shade)
+            self.players[-1].player_color = tuple(map(add, self.players[-1].tile_color, (-25, -25, -25)))
+            self.players[-1].trail_color = tuple(map(add, self.players[-1].tile_color, (25, 25, 25)))
+
             bot_id += 1
 
+        self.board.refresh_tile_colors()
         run = True
         while run:
             self.clock.tick(self.max_fps)

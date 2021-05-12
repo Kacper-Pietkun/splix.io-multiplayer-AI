@@ -67,8 +67,8 @@ class MainMenu:
         except IOError as e:
             self.display_pop_up('Warning', 'You did not train any neat bots', 'ok', None)
 
-    def change_bots(self, value, difficulty):
-        self.single_player_mode = difficulty
+    def change_bots(self, value, mode):
+        self.single_player_mode = mode
 
     def train_new_neat_bots(self):
         neat_manager = NeatManager(constant.TRAINING_MAX_FPS, constant.VISUALIZE_TRAINING, self.window)

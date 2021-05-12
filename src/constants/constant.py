@@ -50,7 +50,7 @@ HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide wh
 # Neat bot
 NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 20  # Add some heuristic bots, that will compete with neat bots while training
 TRAINING_MAX_FPS = 0  # zero means it will be as fast as it can
-VISUALIZE_TRAINING = False  # You can visualize training, however it slows down the whole process
+VISUALIZE_TRAINING = True  # You can visualize training, however it slows down the whole process
 LOAD_POPULATION = False  # False - start learning from zero, True - load saved population from file
 SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME = True
 # size of the population must be set in the neat.conf file

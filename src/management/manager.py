@@ -29,11 +29,22 @@ class Manager:
             if player.id == player_id:
                 player.die()
 
+    # if indices list is empty then update safe zones of each player
     def update_players_safe_zone(self, indices):
+        if not indices:
+            for player in self.players:
+                player.update_safe_zone()
+        else:
+            for player in self.players:
+                for index in indices:
+                    if player.id == index:
+                        player.update_safe_zone()
+
+    def get_player_with_id(self, id):
         for player in self.players:
-            for index in indices:
-                if player.id == index:
-                    player.update_safe_zone()
+            if player.id == id:
+                return player
+        return None
 
     @staticmethod
     def map_direction_to_key(direction):

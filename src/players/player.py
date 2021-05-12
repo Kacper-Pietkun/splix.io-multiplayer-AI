@@ -10,8 +10,8 @@ class Player:
         self.board = board
         self.game_manager = game_manager
         self.tile_color = (randint(50, 205), randint(50, 205), randint(50, 205))
-        self.player_color = tuple(map(add, self.tile_color, (-50, -50, -50)))
-        self.trail_color = tuple(map(add, self.tile_color, (50, 50, 50)))
+        self.player_color = tuple(map(add, self.tile_color, (randint(-50, -30), randint(-50, -30), randint(-50, -30))))
+        self.trail_color = tuple(map(add, self.tile_color, (randint(30, 50), randint(30, 50), randint(30, 50))))
         self.x, self.y = self.spawn_on_random_position()
         self.direction = constant.DIRECTION_NONE
         self.last_pressed_key = None
@@ -33,10 +33,13 @@ class Player:
     def spawn_on_random_position(self):
         self.x = randint(0, self.board.width)
         self.y = randint(0, self.board.height)
-        while not self.board.can_create_player_spawn(self.x, self.y):
-            self.x = randint(0, self.board.width)
-            self.y = randint(0, self.board.height)
+        i = 0
+        while not self.board.can_create_player_spawn(self.x, self.y) and i < 10:
+            self.x = randint(1, self.board.width - 1)
+            self.y = randint(1, self.board.height - 1)
+            i += 1
         self.board.create_player_spawn(self.id, self.tile_color, self.x, self.y)
+        self.game_manager.update_players_safe_zone([])
         # player's initial position is in the center of his safe zone
         self.x += int(self.board.player_spawn_size / 2)
         self.y += int(self.board.player_spawn_size / 2)

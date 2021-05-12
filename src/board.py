@@ -20,6 +20,17 @@ class Board:
             self.color = constant.BOARD_TILE_NEUTRAL_COLOR
             self.is_trail = False
 
+    def refresh_tile_colors(self):
+        for i in range(0, self.width):
+            for j in range(0, self.height):
+                player = self.game_manager.get_player_with_id(self.tiles[i][j].owner_id)
+                if player is None:
+                    self.tiles[i][j].color = constant.BOARD_TILE_NEUTRAL_COLOR
+                elif self.tiles[i][j].is_trail is False:
+                    self.tiles[i][j].color = player.tile_color
+                else:
+                    self.tiles[i][j].color = player.trail_color
+
     # Every time players draws a position for his spawn, it needs to be checked whether that position is available
     def can_create_player_spawn(self, x, y):
         for i in range(x, x + self.player_spawn_size):
@@ -34,6 +45,7 @@ class Board:
             for j in range(y, y + self.player_spawn_size):
                 self.tiles[i][j].owner_id = player_id
                 self.tiles[i][j].color = player_tile_color
+                self.tiles[i][j].is_trail = False
 
     # It rewrites information that given tile is currently containing
     # for instance, if a player moves on this tile, then we change tiles owner id, color and whether it is a trail...
