@@ -38,8 +38,8 @@ class HeuristicBot(Bot):
                 self.direction = self.get_direction_that_will_not_kill_me()
                 self.just_left_safe_zone = False
             else:
-                if dist_to_safe_tile + self.safe_offset >= dist_to_enemy or \
-                        len(self.trail_positions) > constant.HEURISTIC_BOT_WANDER_LENGTH and \
+                if (dist_to_safe_tile + self.safe_offset >= dist_to_enemy or
+                        len(self.trail_positions) > constant.HEURISTIC_BOT_WANDER_LENGTH) and \
                         safe_tile_pos is not None:
                     self.determine_path_to_the_tile(safe_tile_pos, dist_to_safe_tile)
                     self.follow_path()
@@ -138,7 +138,7 @@ class HeuristicBot(Bot):
                 self.optimal_path.remove(own_pos)
                 break
 
-    # compare whether positions are equal or not euqal
+    # compare whether positions are equal or not equal
     def compare_positions(self, pos_1, pos_2):
         x_1, y_1 = pos_1
         x_2, y_2 = pos_2
@@ -185,15 +185,6 @@ class HeuristicBot(Bot):
             for neighbour_x, neighbour_y in neighbours:
                 if trail_x == neighbour_x and trail_y == neighbour_y:
                     return True
-        return False
-
-    # opposite directions are UP and DOWN, LEFT and RIGHT
-    def is_it_opposite_direction(self, drawn_direction):
-        if self.direction == constant.DIRECTION_UP and drawn_direction == constant.DIRECTION_DOWN or \
-                self.direction == constant.DIRECTION_DOWN and drawn_direction == constant.DIRECTION_UP or \
-                self.direction == constant.DIRECTION_LEFT and drawn_direction == constant.DIRECTION_RIGHT or \
-                self.direction == constant.DIRECTION_RIGHT and drawn_direction == constant.DIRECTION_LEFT:
-            return True
         return False
 
     # the distance is from enemy only to bot's head

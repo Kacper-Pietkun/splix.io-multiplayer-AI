@@ -58,3 +58,12 @@ class Bot(Player):
         if tile.is_trail is True and tile.owner_id == self.id:
             return True
         return False
+
+    # opposite directions are UP and DOWN, LEFT and RIGHT
+    def is_it_opposite_direction(self, drawn_direction):
+        if self.direction == constant.DIRECTION_UP and drawn_direction == constant.DIRECTION_DOWN or \
+                self.direction == constant.DIRECTION_DOWN and drawn_direction == constant.DIRECTION_UP or \
+                self.direction == constant.DIRECTION_LEFT and drawn_direction == constant.DIRECTION_RIGHT or \
+                self.direction == constant.DIRECTION_RIGHT and drawn_direction == constant.DIRECTION_LEFT:
+            return True
+        return False

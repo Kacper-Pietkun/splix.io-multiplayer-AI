@@ -9,24 +9,23 @@ from src.players.neat_bot import NeatBot
 from src.players.heuristic_bot import HeuristicBot
 from src.management.manager import Manager
 from random import randint
-from operator import add
 
 
 class NeatManager(Manager):
-    def __init__(self, max_fps, print_game, window):
+    def __init__(self, max_fps, visualize_training, window):
         super().__init__(max_fps, window)
-        self.gen = 0
-        self.print_game = print_game
+        self.generation = 0
+        self.visualize_training = visualize_training
         self.config = None
         self.best_instance = None
         self.best_fitness = 0
-        self.p = None
+        self.population = None
 
     def load_population(self):
         path = os.path.join(os.path.dirname(__file__), '../../resources/population.dat')
         try:
             with open(path, 'rb') as f:
-                self.p = pickle.load(f)
+                self.population = pickle.load(f)
         except IOError as e:
             raise
 
@@ -37,52 +36,45 @@ class NeatManager(Manager):
         self.config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                                          config_file)
-        if self.p is None:
+
+        # if user didn't want to load existing population then create a new one
+        if self.population is None:
             # Create the population, which is the top-level object for a NEAT run.
-            self.p = neat.Population(self.config)
+            self.population = neat.Population(self.config)
             # Add a stdout reporter to show progress in the terminal.
-            self.p.add_reporter(neat.StdOutReporter(True))
+            self.population.add_reporter(neat.StdOutReporter(True))
             stats = neat.StatisticsReporter()
-            self.p.add_reporter(stats)
-            # self.p.add_reporter(neat.Checkpointer(5))
-        winner = self.p.run(self.eval_genomes, 10000)
+            self.population.add_reporter(stats)
+
+        winner = self.population.run(self.eval_genomes, 10000)
         # show final stats
         print('\nBest genome:\n{!s}'.format(winner))
 
+    @staticmethod
     def save_object(self, obj, filename):
         with open(filename, 'wb') as output:
             pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
-    def save_best_generation_instance(self, filename='../../resources/best_generation_instances.pickle'):
-        instances = []
-        if os.path.isfile(filename):
-            instances = self.load_object(filename)
-        instances.append(self.best_instance)
-        self.save_object(instances, filename)
-
     def eval_genomes(self, genomes, _):
-        self.gen += 1
-        nets = []
+        self.generation += 1
 
-        bot_id = 1
-        for genome_id, genome in genomes:
-            genome.fitness = 0  # start with fitness level of 0
-            net = neat.nn.FeedForwardNetwork.create(genome, self.config)
-            self.players.append(NeatBot(self.board, self, genome, net, bot_id))
-            bot_id += 1
+        bot_id = [1]
+        self.spawn_neat_bots(genomes, bot_id)
+        self.spawn_heuristic_bots(bot_id)
 
-        # Add heuristic bots to the training process
-        for i in range(0, constant.NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING):
-            self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, bot_id))
-            # change color of heuristic bots to distinguish them from neat bots
-            white_shade = randint(200, 230)
-            self.players[-1].tile_color = (white_shade, white_shade, white_shade)
-            self.players[-1].player_color = tuple(map(add, self.players[-1].tile_color, (-25, -25, -25)))
-            self.players[-1].trail_color = tuple(map(add, self.players[-1].tile_color, (25, 25, 25)))
+        self.train_one_generation()
 
-            bot_id += 1
+        # clear map from all heuristic bots that are left
+        self.kill_em_all()
 
-        self.board.refresh_tile_colors()
+        if self.generation % constant.SAVE_GENERATION_RATE == 0:
+            self.save_current_progress(genomes)
+
+        if self.generation % constant.SAVE_GENERATION_RATE == 0 and \
+                constant.SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME:
+            self.save_best_neural_network_image(genomes)
+
+    def train_one_generation(self):
         run = True
         while run:
             self.clock.tick(self.max_fps)
@@ -93,24 +85,38 @@ class NeatManager(Manager):
                 break
             self.players_action(None)
             self.remove_dead_players()
-            if self.print_game:
+            if self.visualize_training:
                 self.window.print_window(self.board, self.players)
             # print("NEAT BOTS LEFT: " + str(self.number_of_neat_bots()))
 
-        if constant.SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME:
-            self.draw_best_neural_network(genomes)
+    def spawn_neat_bots(self, genomes, bot_id):
+        for genome_id, genome in genomes:
+            genome.fitness = 0  # start with fitness level of 0
+            net = neat.nn.FeedForwardNetwork.create(genome, self.config)
+            self.players.append(NeatBot(self.board, self, genome, net, bot_id[0]))
+            bot_id[0] += 1
 
-        self.kill_em_all()
-        if self.gen % 10 == 0:
-            local_dir = os.path.dirname(__file__)
+    # Add heuristic bots to the training process (only if it was specified in constant.py)
+    def spawn_heuristic_bots(self, bot_id):
+        for i in range(0, constant.NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING):
+            self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, bot_id[0]))
+            # change color of heuristic bots to distinguish them from neat bots
+            white_shade = randint(200, 230)
+            self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
+                                              tile_color=(white_shade, white_shade, white_shade),
+                                              trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
+            bot_id[0] += 1
 
-            path = os.path.join(local_dir, '../../resources/population.dat')
-            self.save_object(self.p, path)
+    def save_current_progress(self, genomes):
+        local_dir = os.path.dirname(__file__)
 
-            path = os.path.join(local_dir, '../../resources/best_genome.dat')
-            self.save_object(self.get_best_genome(genomes), path)
+        path = os.path.join(local_dir, '../../resources/population.dat')
+        self.save_object(self.population, path)
 
-            print("Exporting population and best genome")
+        path = os.path.join(local_dir, '../../resources/best_genome.dat')
+        self.save_object(self.get_best_genome(genomes), path)
+
+        print("Exporting population and best genome")
 
     # When we use heuristic bots during the training, we need to make sure that neat bots were not eliminated
     # When neat bots are eliminated then end this generation
@@ -142,5 +148,6 @@ class NeatManager(Manager):
                 best_genome = genome
         return best_genome
 
-    def draw_best_neural_network(self, genomes):
-        visualize.draw_net(self.config, self.get_best_genome(genomes))
+    def save_best_neural_network_image(self, genomes):
+        path = os.path.join(os.path.dirname(__file__), '../../resources/net')
+        visualize.draw_net(self.config, self.get_best_genome(genomes), filename=path)

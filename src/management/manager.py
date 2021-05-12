@@ -40,12 +40,6 @@ class Manager:
                     if player.id == index:
                         player.update_safe_zone()
 
-    def get_player_with_id(self, id):
-        for player in self.players:
-            if player.id == id:
-                return player
-        return None
-
     @staticmethod
     def map_direction_to_key(direction):
         if direction == constant.DIRECTION_UP:

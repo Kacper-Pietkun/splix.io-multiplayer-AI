@@ -34,7 +34,7 @@ class Player:
         self.x = randint(0, self.board.width)
         self.y = randint(0, self.board.height)
         i = 0
-        while not self.board.can_create_player_spawn(self.x, self.y) and i < 10:
+        while not self.board.can_create_player_spawn(self.x, self.y) and i < 25:
             self.x = randint(1, self.board.width - 1)
             self.y = randint(1, self.board.height - 1)
             i += 1
@@ -141,5 +141,12 @@ class Player:
         self.safe_zone_positions = set(filter(lambda el: (self.board.get_tile_information(el[0], el[1]).owner_id ==
                                                           self.id), self.safe_zone_positions))
 
-
+    def change_color_set(self, player_color, tile_color, trail_color):
+        self.player_color = player_color
+        self.tile_color = tile_color
+        self.trail_color = trail_color
+        for tile_x, tile_y in self.safe_zone_positions:
+            self.board.change_tile_information(self, tile_x, tile_y, is_trail=False)
+        for tile_x, tile_y in self.trail_positions:
+            self.board.change_tile_information(self, tile_x, tile_y, is_trail=True)
 
