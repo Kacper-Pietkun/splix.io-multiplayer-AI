@@ -23,12 +23,9 @@ class NeatBot(Bot):
 
         # kill the player who doesn't move out of the safe zone
         if (self.zone_time > 200 and self.genome.fitness == 0) or self.zone_time > 1000:
+            if self.genome.fitness >= 0:
+                self.genome.fitness = sqrt(self.genome.fitness)  # player is punished for dying because of stagnation
             self.game_manager.kill_player(self.id)
-
-        # encourage bot to move out of the safe zone
-        # if self.just_left_safe_zone is True:
-        #     self.genome.fitness += 0.05
-        #     self.just_left_safe_zone = False
 
         self.determine_next_move()
         self.movement()
@@ -39,41 +36,98 @@ class NeatBot(Bot):
             inputs = self.get_inputs()
             outputs = self.net.activate(inputs)
 
-            max_index = 0
-            max_value = -2
-            for i in range(0, len(outputs)):
-                if max_value <= outputs[i]:
-                    max_value = outputs[i]
-                    max_index = i
+            relative_left = self.get_relative_direction(constant.DIRECTION_LEFT)
+            relative_right = self.get_relative_direction(constant.DIRECTION_RIGHT)
+            output = outputs[0]
 
-            if not self.is_it_opposite_direction(max_index + 1):
-                # directions are constants from 1 to 4
-                self.direction = max_index + 1
+            if output > 0.7:
+                self.direction = relative_left
+            elif output < -0.7:
+                self.direction = relative_right
 
     def get_inputs(self):
-        relative_straight = self.get_relative_direction(constant.DIRECTION_UP)
-        relative_left = self.get_relative_direction(constant.DIRECTION_LEFT)
-        relative_right = self.get_relative_direction(constant.DIRECTION_RIGHT)
+        dist_straight_map_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_UP)
+        dist_left_map_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_LEFT)
+        dist_right_map_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_RIGHT)
 
-        dist_straight_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_UP)
-        dist_left_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_LEFT)
-        dist_right_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_RIGHT)
+        dist_safe_zone_border_straight = \
+            self.get_distance_to_safe_zone_border_from_inside_in_relative_direction(constant.DIRECTION_UP)
+        dist_safe_zone_border_left = \
+            self.get_distance_to_safe_zone_border_from_inside_in_relative_direction(constant.DIRECTION_LEFT)
+        dist_safe_zone_border_right = \
+            self.get_distance_to_safe_zone_border_from_inside_in_relative_direction(constant.DIRECTION_RIGHT)
 
-        dist_straight_enemy_trail = self.get_distance_to_closest_enemy_in_direction(relative_straight)
-        dist_left_enemy_trail = self.get_distance_to_closest_enemy_in_direction(relative_left)
-        dist_right_enemy_trail = self.get_distance_to_closest_enemy_in_direction(relative_right)
+        dist_straight_map_border = 0 if (dist_straight_map_border != 1) else dist_straight_map_border
+        dist_left_map_border = 0 if (dist_left_map_border != 1) else dist_left_map_border
+        dist_right_map_border = 0 if (dist_right_map_border != 1) else dist_right_map_border
 
-        dist_straight_own_trail = self.get_distance_to_my_trail_in_direction(relative_straight)
-        dist_left_own_trail = self.get_distance_to_my_trail_in_direction(relative_left)
-        dist_right_own_trail = self.get_distance_to_my_trail_in_direction(relative_right)
+        distance_to_enemy = self.get_distance_to_closest_enemy(self.x, self.y)
+        # current_x = self.x
+        # current_y = self.y
+        # current_direction = self.direction
+        # relative_directions = [self.get_relative_direction(constant.DIRECTION_UP),
+        #                        self.get_relative_direction(constant.DIRECTION_LEFT),
+        #                        self.get_relative_direction(constant.DIRECTION_RIGHT)]
+        # distances_to_enemies = []
+        # distances_to_safe_zone = []
+        # for direction in relative_directions:
+        #     self.direction = direction
+        #     self.simulate_movement()  # simulate movement in relative direction
+        #     # distances_to_enemies.append(self.get_distance_to_closest_enemy(self.x, self.y))
+        #     (distance, _) = self.get_distance_to_safe_zone(self.x, self.y)
+        #     distances_to_safe_zone.append(distance)
+        #     self.x = current_x  # reset bot's position and direction
+        #     self.y = current_y
+        #     self.direction = current_direction
 
-        (distance_to_safe_zone, position_of_safe_zone) = self.get_distance_to_safe_zone(self.x, self.y)
+        # input_list = [int(dist_left_border), int(dist_straight_border), int(dist_right_border)]
+        # input_list.extend(distances_to_enemies)
+        # input_list.extend(distances_to_safe_zone)
 
-        return [int(dist_left_border), int(dist_straight_border), int(dist_right_border),
-                int(dist_left_enemy_trail), int(dist_straight_enemy_trail), int(dist_right_enemy_trail),
-                int(dist_left_own_trail), int(dist_straight_own_trail), int(dist_right_own_trail),
-                self.is_out_of_safe_zone, int(distance_to_safe_zone),
-                ]
+        input_list = [int(dist_straight_map_border), int(dist_left_map_border), int(dist_right_map_border),
+                      int(dist_safe_zone_border_straight), int(dist_safe_zone_border_left),
+                      int(dist_safe_zone_border_right), int(distance_to_enemy)]
+
+        return input_list
+
+    # When player is inside the safe zone, it returns distance in straight line
+    # to the border of the safe zone in given direction
+    def get_distance_to_safe_zone_border_from_inside_in_relative_direction(self, direction):
+        if self.is_out_of_safe_zone:
+            return 0
+
+        relative_direction = self.get_relative_direction(direction)
+        current_x = self.x
+        current_y = self.y
+        current_direction = self.direction
+        self.direction = relative_direction
+        distance = 0
+        while (self.board.get_tile_information(int(self.x), int(self.y))).owner_id == self.id:
+            self.simulate_movement()
+            distance += 1
+            # there is only map border
+            if self.x < 0 or self.x > constant.BOARD_WIDTH - 1 or self.y < 0 or self.y > constant.BOARD_HEIGHT - 1:
+                self.x = current_x
+                self.y = current_y
+                self.direction = current_direction
+                return 0
+
+        self.x = current_x
+        self.y = current_y
+        self.direction = current_direction
+        return distance
+
+    # just simulate it, change only x and y position of player, leave other variables unchanged
+    # after simulating movement you have to remember to restore player's original position and direction
+    def simulate_movement(self):
+        if self.direction == constant.DIRECTION_UP:
+            self.y = self.y - constant.PLAYER_DELTA_MOVEMENT
+        elif self.direction == constant.DIRECTION_RIGHT:
+            self.x = self.x + constant.PLAYER_DELTA_MOVEMENT
+        elif self.direction == constant.DIRECTION_DOWN:
+            self.y = self.y + constant.PLAYER_DELTA_MOVEMENT
+        elif self.direction == constant.DIRECTION_LEFT:
+            self.x = self.x - constant.PLAYER_DELTA_MOVEMENT
 
     def get_relative_direction(self, direction):
         # constant.DIRECTION_UP - go straight
@@ -91,54 +145,13 @@ class NeatBot(Bot):
     def get_distance_to_wall_in_relative_direction(self, direction):
         r_direction = self.get_relative_direction(direction)
         if r_direction == constant.DIRECTION_UP:
-            return self.y
+            return self.y + 1
         elif r_direction == constant.DIRECTION_LEFT:
-            return self.x
+            return self.x + 1
         elif r_direction == constant.DIRECTION_RIGHT:
             return self.board.width - self.x
         else:
             return self.board.height - self.y
-
-
-    def get_distance_to_closest_trail_in_direction(self, direction, who):
-        min_distance = constant.BOARD_WIDTH * constant.BOARD_HEIGHT
-        for enemy in self.game_manager.players:
-            if (who == 'enemy' and self.id != enemy.id) or (who == "me" and self.id == enemy.id):
-                if direction in (constant.DIRECTION_LEFT, constant.DIRECTION_RIGHT):
-                    for (pos_x, pos_y) in enemy.trail_positions:
-                        if pos_y == self.y and pos_x != self.x:
-                            distance = pos_x - self.x
-                            if direction == constant.DIRECTION_LEFT:
-                                if distance < 0:
-                                    distance *= -1
-                                    if distance < min_distance:
-                                        min_distance = distance
-                            else:
-                                if 0 <= distance < min_distance:
-                                    min_distance = distance
-                else:
-                    for (pos_x, pos_y) in enemy.trail_positions:
-                        if pos_x == self.x and pos_y != self.y:
-                            distance = pos_y - self.y
-                            if direction == constant.DIRECTION_UP:
-                                if distance < 0:
-                                    distance *= -1
-                                    if distance < min_distance:
-                                        min_distance = distance
-                            else:
-                                if 0 <= distance < min_distance:
-                                    min_distance = distance
-        return min_distance
-
-
-    def get_distance_to_my_trail_in_direction(self, direction):
-        return self.get_distance_to_closest_trail_in_direction(direction, 'me')
-
-    def get_distance_to_closest_enemy_in_direction(self, direction):
-        return self.get_distance_to_closest_trail_in_direction(direction, 'enemy')
-
-    def get_distance_to_closest_wall(self, my_x, my_y):
-        return min(my_x + 1, constant.BOARD_WIDTH - my_x, my_y + 1, constant.BOARD_HEIGHT - my_y)
 
     def extend_safe_zone(self):
         old_tiles_number = len(self.safe_zone_positions)
@@ -148,16 +161,8 @@ class NeatBot(Bot):
             delta_tiles_number = new_tiles_number - old_tiles_number
             self.genome.fitness += delta_tiles_number
 
-    def kill_other_player(self, killed_player_id):
-        super().kill_other_player(killed_player_id)
-        if self.is_dead is False:
-            # self.genome.fitness += 0.05
-            pass
-
     def die(self):
         if self.is_dead is False:
-            if self.genome.fitness >= 0:
-                self.genome.fitness = sqrt(self.genome.fitness)
             self.genome.fitness -= 10  # punishment for bot
         super().die()
 

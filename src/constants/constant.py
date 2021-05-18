@@ -2,7 +2,7 @@
 # **********************************************************************************************************************
 # Game
 GAME_MAX_FPS = 65
-BOTS_NUMBER = 65
+BOTS_NUMBER = 0
 GAME_TIME = 5 * 60 * 1000  # 5 min in milliseconds
 MULTIPLAYER_MAX_NO_OF_PLAYERS = 13
 MINIMAL_NUMBER_OF_PLAYER_TO_START = 2
@@ -23,8 +23,8 @@ DIRECTION_INDEX_START = 1
 DIRECTION_INDEX_END = 4
 
 # Board
-BOARD_WIDTH = 50
-BOARD_HEIGHT = 50
+BOARD_WIDTH = 65
+BOARD_HEIGHT = 65
 BOARD_PLAYER_SPAWN_SIZE = 3
 BOARD_TILE_NEUTRAL_COLOR = (77, 77, 77)
 
@@ -48,11 +48,11 @@ HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide wh
 # CHANGE IF YOU WANT
 # **********************************************************************************************************************
 # Neat bot
-NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 40  # Add some heuristic bots, that will compete with neat bots while training
-TRAINING_MAX_FPS = 60  # zero means it will be as fast as it can
-VISUALIZE_TRAINING = True  # You can visualize training, however it slows down the whole process
-LOAD_POPULATION = False  # False - start learning from zero, True - load saved population from file
+NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 60  # Add some heuristic bots, that will compete with neat bots while training
+TRAINING_MAX_FPS = 0  # zero means it will be as fast as it can
+VISUALIZE_TRAINING = False  # You can visualize training, however it slows down the whole process
 SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME = True
-SAVE_GENERATION_RATE = 10  # This number specifies how many generations must take place in order to save the progress
+SAVE_STATISTICS = True
+SAVE_GENERATION_RATE = 1  # This number specifies how many generations must take place in order to save the progress
 # size of the population must be set in the neat.conf file
 # **********************************************************************************************************************

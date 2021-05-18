@@ -20,6 +20,7 @@ class NeatManager(Manager):
         self.best_instance = None
         self.best_fitness = 0
         self.population = None
+        self.statistics = None
 
     def load_population(self):
         path = os.path.join(os.path.dirname(__file__), '../../resources/population.dat')
@@ -43,14 +44,15 @@ class NeatManager(Manager):
             self.population = neat.Population(self.config)
             # Add a stdout reporter to show progress in the terminal.
             self.population.add_reporter(neat.StdOutReporter(True))
-            stats = neat.StatisticsReporter()
-            self.population.add_reporter(stats)
+            self.statistics = neat.StatisticsReporter()
+            self.population.add_reporter(self.statistics)
 
-        winner = self.population.run(self.eval_genomes, 10000)
+        winner = self.population.run(self.eval_genomes, 1000000)
+        self.save_files(None)
+
         # show final stats
         print('\nBest genome:\n{!s}'.format(winner))
 
-    @staticmethod
     def save_object(self, obj, filename):
         with open(filename, 'wb') as output:
             pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
@@ -66,21 +68,18 @@ class NeatManager(Manager):
 
         # clear map from all heuristic bots that are left
         self.kill_em_all()
-
-        if self.generation % constant.SAVE_GENERATION_RATE == 0:
-            self.save_current_progress(genomes)
-
-        if self.generation % constant.SAVE_GENERATION_RATE == 0 and \
-                constant.SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME:
-            self.save_best_neural_network_image(genomes)
+        self.save_files(genomes)
 
     def train_one_generation(self):
         run = True
+        iteration = 0
         while run:
+            if iteration > 100000:
+                break
             self.clock.tick(self.max_fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
+                    pygame.quit()
             if self.are_there_any_neat_bots() is False:
                 break
             self.players_action(None)
@@ -88,6 +87,8 @@ class NeatManager(Manager):
             if self.visualize_training:
                 self.window.print_window(self.board, self.players)
             # print("NEAT BOTS LEFT: " + str(self.number_of_neat_bots()))
+            iteration += 1
+        print(iteration)
 
     def spawn_neat_bots(self, genomes, bot_id):
         for genome_id, genome in genomes:
@@ -106,6 +107,18 @@ class NeatManager(Manager):
                                               tile_color=(white_shade, white_shade, white_shade),
                                               trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
             bot_id[0] += 1
+
+    def save_files(self, genomes):
+        if self.generation % constant.SAVE_GENERATION_RATE == 0 and genomes is not None:
+            self.save_current_progress(genomes)
+
+        if self.generation % constant.SAVE_GENERATION_RATE == 0 and \
+                constant.SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME and genomes is not None:
+            self.save_best_neural_network_image(genomes)
+
+        if self.generation % constant.SAVE_GENERATION_RATE == 0 and \
+                constant.SAVE_STATISTICS:
+            self.save_statistics()
 
     def save_current_progress(self, genomes):
         local_dir = os.path.dirname(__file__)
@@ -151,3 +164,7 @@ class NeatManager(Manager):
     def save_best_neural_network_image(self, genomes):
         path = os.path.join(os.path.dirname(__file__), '../../resources/net')
         visualize.draw_net(self.config, self.get_best_genome(genomes), filename=path)
+
+    def save_statistics(self):
+        path = os.path.join(os.path.dirname(__file__), '../../resources/avg_fitness.svg')
+        visualize.plot_stats(statistics=self.statistics, filename=path)
