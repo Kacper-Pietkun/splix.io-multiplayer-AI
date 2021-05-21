@@ -27,6 +27,10 @@ class NeatManager(Manager):
         try:
             with open(path, 'rb') as f:
                 self.population = pickle.load(f)
+                for reporter in self.population.reporters.reporters:
+                    if type(reporter) is neat.StatisticsReporter:
+                        self.statistics = reporter
+                        break
         except IOError as e:
             raise
 

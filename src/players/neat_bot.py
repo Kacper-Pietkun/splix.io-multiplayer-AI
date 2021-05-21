@@ -61,32 +61,31 @@ class NeatBot(Bot):
         dist_left_map_border = 0 if (dist_left_map_border != 1) else dist_left_map_border
         dist_right_map_border = 0 if (dist_right_map_border != 1) else dist_right_map_border
 
-        distance_to_enemy = self.get_distance_to_closest_enemy(self.x, self.y)
-        # current_x = self.x
-        # current_y = self.y
-        # current_direction = self.direction
-        # relative_directions = [self.get_relative_direction(constant.DIRECTION_UP),
-        #                        self.get_relative_direction(constant.DIRECTION_LEFT),
-        #                        self.get_relative_direction(constant.DIRECTION_RIGHT)]
-        # distances_to_enemies = []
-        # distances_to_safe_zone = []
-        # for direction in relative_directions:
-        #     self.direction = direction
-        #     self.simulate_movement()  # simulate movement in relative direction
-        #     # distances_to_enemies.append(self.get_distance_to_closest_enemy(self.x, self.y))
-        #     (distance, _) = self.get_distance_to_safe_zone(self.x, self.y)
-        #     distances_to_safe_zone.append(distance)
-        #     self.x = current_x  # reset bot's position and direction
-        #     self.y = current_y
-        #     self.direction = current_direction
+        current_x = self.x
+        current_y = self.y
+        current_direction = self.direction
+        relative_directions = [self.get_relative_direction(constant.DIRECTION_UP),
+                               self.get_relative_direction(constant.DIRECTION_LEFT),
+                               self.get_relative_direction(constant.DIRECTION_RIGHT)]
+        distances_to_enemies = []
+        distances_to_safe_zone = []
+        for direction in relative_directions:
+            self.direction = direction
+            self.simulate_movement()  # simulate movement in relative direction
+            distances_to_enemies.append(self.get_distance_to_closest_enemy(self.x, self.y))
+            (distance, _) = self.get_distance_to_safe_zone(self.x, self.y)
+            distances_to_safe_zone.append(distance)
+            self.x = current_x  # reset bot's position and direction
+            self.y = current_y
+            self.direction = current_direction
 
-        # input_list = [int(dist_left_border), int(dist_straight_border), int(dist_right_border)]
-        # input_list.extend(distances_to_enemies)
-        # input_list.extend(distances_to_safe_zone)
+        input_list = []
+        input_list.extend(distances_to_enemies)
+        input_list.extend(distances_to_safe_zone)
 
-        input_list = [int(dist_straight_map_border), int(dist_left_map_border), int(dist_right_map_border),
-                      int(dist_safe_zone_border_straight), int(dist_safe_zone_border_left),
-                      int(dist_safe_zone_border_right), int(distance_to_enemy)]
+        input_list.extend([int(dist_straight_map_border), int(dist_left_map_border), int(dist_right_map_border),
+                           int(dist_safe_zone_border_straight), int(dist_safe_zone_border_left),
+                           int(dist_safe_zone_border_right), self.zone_time]) # , int(self.is_out_of_safe_zone)
 
         return input_list
 

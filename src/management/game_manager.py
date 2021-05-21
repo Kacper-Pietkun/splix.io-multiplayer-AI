@@ -1,5 +1,4 @@
 import os
-
 import neat
 import pygame
 import pickle
@@ -8,6 +7,7 @@ from src.players.heuristic_bot import HeuristicBot
 from src.players.neat_bot import NeatBot
 from src.constants import constant
 from src.management.manager import Manager
+from random import randint
 
 
 class GameManager(Manager):
@@ -21,6 +21,10 @@ class GameManager(Manager):
             for i in range(0, int(no_of_all_bots / 2)):
                 self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, player_id))
                 player_id += 1
+                white_shade = randint(200, 230)
+                self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
+                                                  tile_color=(white_shade, white_shade, white_shade),
+                                                  trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
 
         if bots_mode == constant.MODE_NEAT_BOTS_ONLY or bots_mode == constant.MODE_BOTH_BOTS_ONLY:
             try:
