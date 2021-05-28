@@ -6,6 +6,9 @@ neat-python==0.92
 numpy==1.19.5
 Pillow==8.2.0
 pygame==2.0.1
+pygame-menu==4.0.4
 pyparsing==2.4.7
+pyperclip==1.8.2
 python-dateutil==2.8.1
 six==1.15.0
+typing-extensions==3.10.0.0
