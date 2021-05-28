@@ -27,7 +27,8 @@ class HeuristicBot(Bot):
             self.check_followed_path()
             if self.is_following_a_path:
                 self.follow_path()
-            elif distance_to_kill < dist_to_enemy and dist_to_safe_tile < constant.HEURISTIC_BOT_FIND_KILL_OFFSET and \
+            elif constant.ARE_HEURISTIC_AGGRESSIVE and distance_to_kill < dist_to_enemy and \
+                    dist_to_safe_tile < constant.HEURISTIC_BOT_FIND_KILL_OFFSET and \
                     distance_to_kill < constant.HEURISTIC_BOT_KILL_RANGE:
                 self.determine_path_to_the_tile(killing_position, distance_to_kill)
                 self.follow_path()

@@ -2,7 +2,8 @@
 # **********************************************************************************************************************
 # Game
 GAME_MAX_FPS = 60
-All_BOTS_NUMBER = 8
+All_BOTS_NUMBER = 30
+ARE_HEURISTIC_AGGRESSIVE = False
 DISTINGUISH_HEURISTIC_AND_NEAT_BOTS = True
 MULTIPLAYER_MAX_NO_OF_PLAYERS = 13
 MINIMAL_NUMBER_OF_PLAYER_TO_START = 2
