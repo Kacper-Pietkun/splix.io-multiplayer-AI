@@ -14,10 +14,12 @@ from random import randint
 
 # For single player games
 class GameManager(Manager):
-    def __init__(self, bots_mode, max_fps, no_of_all_bots, window):
+    def __init__(self, bots_mode, max_fps, no_of_all_bots, window, main_menu):
         super().__init__(max_fps, window)
         player_id = 1
         self.players.append(HumanPlayer(self.board, self, player_id))
+        self.human_score = 0
+        self.main_menu = main_menu
         player_id += 1
 
         heuristic_bots_number = 0
@@ -69,8 +71,16 @@ class GameManager(Manager):
             self.players_action(pressed_key)
             self.remove_dead_players()
             self.window.print_window(self.board, self.players)
+            self.update_human_score()
             if self.check_if_human_died():
                 run = False
+                self.main_menu.display_pop_up('You lost', 'Your score: ' + str(self.human_score), 'ok', None)
+
+    def update_human_score(self):
+        for player in self.players:
+            if player.id == 1:
+                self.human_score = len(player.safe_zone_positions)
+        return True
 
     def check_if_human_died(self):
         for player in self.players:
