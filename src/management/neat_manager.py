@@ -1,4 +1,6 @@
 import os
+import sys
+
 import neat
 import pygame
 import pickle
@@ -84,6 +86,7 @@ class NeatManager(Manager):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    sys.exit()
             if self.are_there_any_neat_bots() is False:
                 break
             self.players_action(None)
@@ -106,10 +109,11 @@ class NeatManager(Manager):
         for i in range(0, constant.NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING):
             self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, bot_id[0]))
             # change color of heuristic bots to distinguish them from neat bots
-            white_shade = randint(200, 230)
-            self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
-                                              tile_color=(white_shade, white_shade, white_shade),
-                                              trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
+            if constant.DISTINGUISH_HEURISTIC_AND_NEAT_BOTS is True:
+                white_shade = randint(200, 230)
+                self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
+                                                  tile_color=(white_shade, white_shade, white_shade),
+                                                  trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
             bot_id[0] += 1
 
     def save_files(self, genomes):

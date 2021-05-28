@@ -62,7 +62,7 @@ class MainMenu:
     def play_with_bots(self):
         try:
             game_manager = GameManager(self.single_player_mode, constant.GAME_MAX_FPS,
-                                       constant.BOTS_NUMBER, self.window)
+                                       constant.All_BOTS_NUMBER, self.window)
             game_manager.run()
         except IOError as e:
             self.display_pop_up('Warning', 'You did not train any neat bots', 'ok', None)

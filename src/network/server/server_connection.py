@@ -21,7 +21,7 @@ class ServerConnection(threading.Thread):
     def run(self):
         try:
             self.handle_connection()
-        except (SocketException, ConnectionResetError) as e:
+        except (SocketException, ConnectionResetError, ConnectionAbortedError) as e:
             self.network_game_manager.remove_disconnected_player(self.handled_player_id)
             print("Client disconnected unexpectedly: ", self.address)
             return

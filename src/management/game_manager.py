@@ -1,4 +1,6 @@
 import os
+import sys
+
 import neat
 import pygame
 import pickle
@@ -10,6 +12,7 @@ from src.management.manager import Manager
 from random import randint
 
 
+# For single player games
 class GameManager(Manager):
     def __init__(self, bots_mode, max_fps, no_of_all_bots, window):
         super().__init__(max_fps, window)
@@ -17,14 +20,25 @@ class GameManager(Manager):
         self.players.append(HumanPlayer(self.board, self, player_id))
         player_id += 1
 
+        heuristic_bots_number = 0
+        neat_bots_number = 0
+        if bots_mode == constant.MODE_BOTH_BOTS_ONLY:
+            heuristic_bots_number = int(no_of_all_bots / 2)
+            neat_bots_number = int(no_of_all_bots / 2)
+        elif bots_mode == constant.MODE_HEURISTIC_BOTS_ONLY:
+            heuristic_bots_number = no_of_all_bots
+        else:
+            neat_bots_number = no_of_all_bots
+
         if bots_mode == constant.MODE_HEURISTIC_BOTS_ONLY or bots_mode == constant.MODE_BOTH_BOTS_ONLY:
-            for i in range(0, int(no_of_all_bots / 2)):
+            for i in range(0, heuristic_bots_number):
                 self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, player_id))
                 player_id += 1
-                white_shade = randint(200, 230)
-                self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
-                                                  tile_color=(white_shade, white_shade, white_shade),
-                                                  trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
+                if bots_mode == constant.MODE_BOTH_BOTS_ONLY and constant.DISTINGUISH_HEURISTIC_AND_NEAT_BOTS:
+                    white_shade = randint(200, 230)
+                    self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
+                                                      tile_color=(white_shade, white_shade, white_shade),
+                                                      trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
 
         if bots_mode == constant.MODE_NEAT_BOTS_ONLY or bots_mode == constant.MODE_BOTH_BOTS_ONLY:
             try:
@@ -33,14 +47,13 @@ class GameManager(Manager):
                 best_genome.fitness = 0
             except IOError as e:
                 raise
-            for i in range(0, int(no_of_all_bots / 2)):
+            for i in range(0, neat_bots_number):
                 net = neat.nn.FeedForwardNetwork.create(best_genome, config)
                 self.players.append(NeatBot(self.board, self, best_genome, net, player_id))
                 player_id += 1
 
     def run(self):
         self.game_loop()
-        pygame.quit()
 
     def game_loop(self):
         run = True
@@ -51,10 +64,19 @@ class GameManager(Manager):
                 if event.type == pygame.KEYDOWN:
                     pressed_key = event.key
                 if event.type == pygame.QUIT:
-                    run = False
+                    pygame.quit()
+                    sys.exit()
             self.players_action(pressed_key)
             self.remove_dead_players()
             self.window.print_window(self.board, self.players)
+            if self.check_if_human_died():
+                run = False
+
+    def check_if_human_died(self):
+        for player in self.players:
+            if player.id == 1:
+                return False
+        return True
 
     def load_config(self):
         config_file = os.path.join(os.path.dirname(__file__), '../../resources/neat.conf')

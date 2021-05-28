@@ -120,4 +120,10 @@ class Board:
             if player.id != killer.id:
                 pos_x, pos_y = position
                 if pos_x == int(player.x) and pos_y == int(player.y):
-                    player.die()
+                    # check whether killer should kill or die himself
+                    # killer might die, because someone might be on his trail's position and that bot would kill killer
+                    # during this frame
+                    if self.tiles[pos_x][pos_y].is_trail is False:
+                        player.die()
+                    else:
+                        killer.die()

@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 import time
 import threading
@@ -39,8 +41,11 @@ class Client:
         while self.is_game_running is False:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.is_game_running = True  # in order to kill thread
+                    thread.join()
                     self.connection.my_socket.close()
                     pygame.quit()
+                    sys.exit()
             wait_message = 'waiting for other players'
             dots = '.'
             iteration = iteration % 4
@@ -58,7 +63,8 @@ class Client:
                     pressed_key = event.key
                 if event.type == pygame.QUIT:
                     self.connection.close_connection()
-                    self.is_game_running = False
+                    pygame.quit()
+                    sys.exit()
             self.connection.listen_for_game_data(self)
             self.connection.send_game_data((self.player_id, pressed_key))
             self.window.print_window_from_serialized(self.serialized_board, self.serialized_players)

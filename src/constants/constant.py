@@ -1,9 +1,9 @@
 # DO NOT CHANGE IF YOU DON't NEED TO
 # **********************************************************************************************************************
 # Game
-GAME_MAX_FPS = 0
-BOTS_NUMBER = 50
-GAME_TIME = 5 * 60 * 1000  # 5 min in milliseconds
+GAME_MAX_FPS = 60
+All_BOTS_NUMBER = 8
+DISTINGUISH_HEURISTIC_AND_NEAT_BOTS = True
 MULTIPLAYER_MAX_NO_OF_PLAYERS = 13
 MINIMAL_NUMBER_OF_PLAYER_TO_START = 2
 TITLE = 'Splix.io'
@@ -23,8 +23,8 @@ DIRECTION_INDEX_START = 1
 DIRECTION_INDEX_END = 4
 
 # Board
-BOARD_WIDTH = 65
-BOARD_HEIGHT = 65
+BOARD_WIDTH = 50
+BOARD_HEIGHT = 50
 BOARD_PLAYER_SPAWN_SIZE = 3
 BOARD_TILE_NEUTRAL_COLOR = (77, 77, 77)
 
