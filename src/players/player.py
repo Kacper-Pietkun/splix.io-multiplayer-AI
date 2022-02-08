@@ -12,6 +12,7 @@ class Player:
         self.tile_color = (randint(50, 205), randint(50, 205), randint(50, 205))
         self.player_color = tuple(map(add, self.tile_color, (randint(-50, -30), randint(-50, -30), randint(-50, -30))))
         self.trail_color = tuple(map(add, self.tile_color, (randint(30, 50), randint(30, 50), randint(30, 50))))
+        self.safe_zone_positions = set()
         self.x, self.y = self.spawn_on_random_position()
         self.direction = constant.DIRECTION_NONE
         self.last_pressed_key = None
@@ -24,10 +25,6 @@ class Player:
         self.max_pos_x = int(self.x + int(self.board.player_spawn_size / 2))
         self.is_dead = False
         self.trail_positions = []
-        self.safe_zone_positions = set()
-        for i in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
-            for j in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
-                self.safe_zone_positions.add((int(self.x) - 1 + i, int(self.y) - 1 + j))
 
     # Drawing position for the player until it finds available area
     def spawn_on_random_position(self):
@@ -39,6 +36,12 @@ class Player:
             self.y = randint(1, self.board.height - 1)
             i += 1
         self.board.create_player_spawn(self.id, self.tile_color, self.x, self.y)
+
+        # Add new span tiles to the safe zone
+        for i in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
+            for j in range(0, constant.BOARD_PLAYER_SPAWN_SIZE):
+                self.safe_zone_positions.add((int(self.x) + i, int(self.y) + j))
+
         self.game_manager.update_players_safe_zone([])
         # player's initial position is in the center of his safe zone
         self.x += int(self.board.player_spawn_size / 2)
@@ -82,13 +85,13 @@ class Player:
                 self.y < 0 or self.y > self.board.height - 1:
             self.die()
 
-    # if player moves to the next tile, it may mean a lot of things
-    # player could kill other player by crossing theirs trail
-    # player could kill himself by crossing his own trail
-    # player could come back to the safe zone after leaving a trail
-    # player could leave his safe zone
+    # if player moves to the next tile, it may mean a lot of things:
+    # - player could kill other player by crossing theirs trail
+    # - player could kill himself by crossing his own trail
+    # - player could come back to the safe zone after leaving a trail
+    # - player could leave his safe zone
     def check_current_tile(self):
-        if self.x.is_integer() and self.y.is_integer():
+        if not self.is_dead and self.x.is_integer() and self.y.is_integer():
             tile = self.board.get_tile_information(int(self.x), int(self.y))
             if tile.owner_id == self.id and tile.is_trail is True:
                 self.die()  # Player kills himself
@@ -121,7 +124,7 @@ class Player:
                 for j in range(1, self.max_pos_y - self.min_pos_y + 2):
                     if new_tiles_information[i][j] != -1:
                         self.safe_zone_positions.add((self.min_pos_x + i - 1, self.min_pos_y + j - 1))
-            # bot moved back to the safe zone so he has no trail
+            # player moved back to the safe zone so he has no trail
             self.trail_positions = []
 
     # If player has moved to the next tile, he should leave a trial (paint adequate tile)
@@ -137,11 +140,14 @@ class Player:
             if tile.owner_id != constant.PLAYER_NEUTRAL_INDEX:
                 self.game_manager.update_players_safe_zone(player_index)
 
+    # update safe zone by deleting tiles that no longer belong to the player (somebody stole them)
     def update_safe_zone(self):
         self.safe_zone_positions = set(filter(lambda el: (self.board.get_tile_information(el[0], el[1]).owner_id ==
                                                           self.id), self.safe_zone_positions))
 
-    def change_color_set(self, player_color, tile_color, trail_color):
+    # Change color of player of its safe zone's tiles and of its trail's tiles
+    # You can change it during the game so that every tile is updated
+    def change_color_set_on_fly(self, player_color, tile_color, trail_color):
         self.player_color = player_color
         self.tile_color = tile_color
         self.trail_color = trail_color

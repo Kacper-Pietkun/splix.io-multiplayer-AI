@@ -111,9 +111,9 @@ class NeatManager(Manager):
             # change color of heuristic bots to distinguish them from neat bots
             if constant.DISTINGUISH_HEURISTIC_AND_NEAT_BOTS is True:
                 white_shade = randint(200, 230)
-                self.players[-1].change_color_set(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
-                                                  tile_color=(white_shade, white_shade, white_shade),
-                                                  trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
+                self.players[-1].change_color_set_on_fly(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
+                                                         tile_color=(white_shade, white_shade, white_shade),
+                                                         trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
             bot_id[0] += 1
 
     def save_files(self, genomes):

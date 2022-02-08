@@ -55,5 +55,5 @@ VISUALIZE_TRAINING = True  # You can visualize training, however it slows down t
 SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME = True
 SAVE_STATISTICS = True
 SAVE_GENERATION_RATE = 1  # This number specifies how many generations must take place in order to save the progress
-# size of the population must be set in the neat.conf file
+# size of the population and other configuration can be found and changed in the neat.conf file
 # **********************************************************************************************************************
