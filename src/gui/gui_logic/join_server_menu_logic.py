@@ -4,6 +4,7 @@ from src.gui.gui_view.pop_up_view import PopUpView
 from src.gui.gui_logic.logic import Logic
 from src.exceptions.socket_exception import SocketException
 from src.exceptions.end_of_game_exception import EndOfGameException
+import socket
 
 
 class JoinServerMenuLogic(Logic):
@@ -24,12 +25,15 @@ class JoinServerMenuLogic(Logic):
         else:
             try:
                 self.my_view.window.print_message_box('connecting to the server...')
-                client = Client(server_ip, 6464, self.my_view.window, self)
-            except ConnectionRefusedError as e:
+                client = Client(server_ip, constant.STANDARD_PORT, self.my_view.window, self)
+                client.connect_tcp_to_server()
+            except (ConnectionRefusedError, TimeoutError) as e:
+                client.connection_udp.my_socket.close()
                 pop_up_view = PopUpView(self.my_view, 'Warning', 'Cannot connect to the server', 'ok', None)
                 pop_up_view.display_menu()
                 return
-            except OSError as e:
+            except (OSError, socket.gaierror) as e:
+                client.connection_udp.my_socket.close()
                 pop_up_view = PopUpView(self.my_view, 'Warning', 'Check whether server IP is valid', 'ok', None)
                 pop_up_view.display_menu()
                 return
@@ -37,10 +41,12 @@ class JoinServerMenuLogic(Logic):
             try:
                 client.join_game(player_name)
             except (SocketException, ConnectionResetError, ConnectionAbortedError) as e:
-                client.connection.my_socket.close()
+                client.connection_tcp.my_socket.close()
+                client.connection_udp.my_socket.close()
                 pop_up_view = PopUpView(self.my_view, 'Connection status', 'Lost connection', 'ok', None)
                 pop_up_view.display_menu()
             except EndOfGameException as e:
-                client.connection.my_socket.close()
+                client.connection_tcp.my_socket.close()
+                client.connection_udp.my_socket.close()
                 pop_up_view = PopUpView(self.my_view, 'You lost', 'Your score: ' + str(client.final_score), 'ok', None)
                 pop_up_view.display_menu()

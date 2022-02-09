@@ -55,6 +55,10 @@ PATH_BEST_GENOME = 'resources/best_genome.dat'
 PATH_NEAT_POPULATION = 'resources/population.dat'
 PATH_AVERAGE_FITNESS_CHART = 'resources/avg_fitness.svg'
 PATH_NET_VISUALIZATION = 'resources/net_visualization'
+
+# Network
+STANDARD_PORT = 6464
+MAX_UDP_PACKET_SIZE = 16384
 # **********************************************************************************************************************
 
 

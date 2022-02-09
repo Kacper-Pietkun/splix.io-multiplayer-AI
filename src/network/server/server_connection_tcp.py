@@ -7,7 +7,11 @@ from src.constants import constant
 from src.exceptions.socket_exception import SocketException
 
 
-class ServerConnection(threading.Thread):
+# We use TCP to establish first connection with the player
+# receive player's name
+# send player's id to the player
+# After the game starts, we check every second whether connection has not been broken
+class ServerConnectionTCP(threading.Thread):
 
     def __init__(self, my_socket, address, network_game_manager, server_listener):
         threading.Thread.__init__(self)
@@ -24,7 +28,6 @@ class ServerConnection(threading.Thread):
         except (SocketException, ConnectionResetError, ConnectionAbortedError) as e:
             self.network_game_manager.remove_disconnected_player(self.handled_player_id)
             print("Client disconnected unexpectedly: ", self.address)
-            return
         except SystemExit as e:
             self.network_game_manager.remove_disconnected_player(self.handled_player_id)
             print("closing server on purpose:", self.address)
@@ -38,20 +41,17 @@ class ServerConnection(threading.Thread):
             self.initial_data_exchange()
 
             # waiting for the minimal number of players to start the game
-            while self.network_game_manager.is_game_running is False:
+            while self.network_game_manager.has_game_started is False:
                 self.check_client_status()
                 time.sleep(0.1)
 
             self.inform_player_about_starting_the_game()
-            while self.network_game_manager.is_game_running:
-                self.game_data_exchange()
-                if self.network_game_manager.is_player_dead(self.handled_player_id):
-                    break
-
-            self.network_game_manager.remove_disconnected_player(self.handled_player_id)
-            self.send_player_score_on_death()
-
-        print('disconnected by: ', self.address)
+            # The game has started from now on player will communicate with server via UDP protocol in order
+            # to get the information about the game
+            # However we use TCP to check if the connection has not been broken
+            while True:
+                self.check_client_status()
+                time.sleep(0.5)
 
     def is_there_place_for_a_new_client(self):
         if len(self.network_game_manager.players) >= constant.MULTIPLAYER_MAX_NO_OF_PLAYERS:
@@ -77,22 +77,6 @@ class ServerConnection(threading.Thread):
     def inform_player_about_starting_the_game(self):
         msg = 1
         if self.network_protocol.send_message(pickle.dumps(msg)) is not None:
-            raise SocketException
-
-    def game_data_exchange(self):
-        serialized_board, serialized_players = self.network_game_manager.return_serialized_data()
-        data_to_send = (serialized_board, serialized_players)
-        if self.network_protocol.send_message(pickle.dumps(data_to_send)) is not None:
-            raise SocketException
-        pickled_data = self.network_protocol.recv_msg()
-        if not pickled_data:
-            raise SocketException
-        (player_id, key_direction) = pickle.loads(pickled_data)
-        self.network_game_manager.change_player_direction(player_id, key_direction)
-
-    def send_player_score_on_death(self):
-        if self.network_protocol.send_message(pickle.dumps(
-                self.network_game_manager.get_dead_player_score(self.handled_player_id))) is not None:
             raise SocketException
 
     def get_id(self):

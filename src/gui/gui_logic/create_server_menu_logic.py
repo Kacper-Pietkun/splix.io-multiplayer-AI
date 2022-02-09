@@ -1,4 +1,5 @@
 import socket
+from src.constants import constant
 from src.network.server.server import Server
 from src.gui.gui_logic.logic import Logic
 
@@ -8,7 +9,7 @@ class CreateServerMenuLogic(Logic):
     def __init__(self, my_view, parent_view):
         super().__init__(my_view, parent_view)
         self.address_ip = '127.0.0.1'
-        self.port = 6464
+        self.port = constant.STANDARD_PORT
         self.server = None
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))

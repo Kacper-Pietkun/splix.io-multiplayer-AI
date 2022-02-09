@@ -13,7 +13,7 @@ class NetworkGameManager(Manager):
         super().__init__(max_fps, None)
         self.lock = threading.Lock()
         self.current_player_id = 0
-        self.is_game_running = False
+        self.has_game_started = False
         self.has_game_ended = False
         self.minimal_no_of_players_to_start = constant.MINIMAL_NUMBER_OF_PLAYER_TO_START
         self.dead_players = []
