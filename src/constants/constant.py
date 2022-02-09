@@ -1,3 +1,5 @@
+from pathlib import Path
+
 # DO NOT CHANGE IF YOU DON't NEED TO
 # **********************************************************************************************************************
 # Game
@@ -8,6 +10,8 @@ DISTINGUISH_HEURISTIC_AND_NEAT_BOTS = True
 MULTIPLAYER_MAX_NO_OF_PLAYERS = 13
 MINIMAL_NUMBER_OF_PLAYER_TO_START = 2
 TITLE = 'Splix.io'
+PLAYER_NAME_MIN_LENGTH = 3
+PLAYER_NAME_MAX_LENGTH = 10
 
 # Single player modes
 MODE_HEURISTIC_BOTS_ONLY = 0
@@ -43,6 +47,14 @@ HEURISTIC_BOT_FIND_KILL_OFFSET = 2  # Bot will search for other bots that he can
 HEURISTIC_BOT_SAFE_OFFSET = 5  # variable that helps to decide whether bot is in danger and should go to the safe zone
 HEURISTIC_BOT_WANDER_LENGTH = 5  # If bot's trail is longer than given value, he goes back to the safe zone
 HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide whether bot is safe to leave the safe zone
+
+# Paths
+ROOT_DIR = Path(__file__).parent.parent.parent
+PATH_NEAT_CONF = 'resources/neat.conf'
+PATH_BEST_GENOME = 'resources/best_genome.dat'
+PATH_NEAT_POPULATION = 'resources/population.dat'
+PATH_AVERAGE_FITNESS_CHART = 'resources/avg_fitness.svg'
+PATH_NET_VISUALIZATION = 'resources/net_visualization'
 # **********************************************************************************************************************
 
 
@@ -51,7 +63,7 @@ HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide wh
 # Neat bot
 NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 10  # Add some heuristic bots, that will compete with neat bots while training
 TRAINING_MAX_FPS = 0  # zero means it will be as fast as it can
-VISUALIZE_TRAINING = True  # You can visualize training, however it slows down the whole process
+VISUALIZE_TRAINING = False  # You can visualize training, however it slows down the whole process
 SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME = True
 SAVE_STATISTICS = True
 SAVE_GENERATION_RATE = 1  # This number specifies how many generations must take place in order to save the progress

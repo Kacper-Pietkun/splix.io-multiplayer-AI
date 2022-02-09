@@ -1,6 +1,5 @@
 import pygame
-from src.gui.window import Window
-from src.board import Board
+from src.management.game_board.board import Board
 from src.constants import constant
 
 

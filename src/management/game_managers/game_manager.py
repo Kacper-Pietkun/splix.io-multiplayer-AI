@@ -1,6 +1,5 @@
 import os
 import sys
-
 import neat
 import pygame
 import pickle
@@ -8,18 +7,19 @@ from src.players.human_player import HumanPlayer
 from src.players.heuristic_bot import HeuristicBot
 from src.players.neat_bot import NeatBot
 from src.constants import constant
-from src.management.manager import Manager
+from src.management.game_managers.manager import Manager
 from random import randint
+from src.gui.gui_view.pop_up_view import PopUpView
 
 
 # For single player games
 class GameManager(Manager):
-    def __init__(self, bots_mode, max_fps, no_of_all_bots, window, main_menu):
+    def __init__(self, bots_mode, max_fps, no_of_all_bots, window, my_view):
         super().__init__(max_fps, window)
         player_id = 1
         self.players.append(HumanPlayer(self.board, self, player_id))
         self.human_score = 0
-        self.main_menu = main_menu
+        self.my_view = my_view
         player_id += 1
 
         heuristic_bots_number = 0
@@ -74,7 +74,8 @@ class GameManager(Manager):
             self.update_human_score()
             if self.check_if_human_died():
                 run = False
-                self.main_menu.display_pop_up('You lost', 'Your score: ' + str(self.human_score), 'ok', None)
+                pop_up_view = PopUpView(self.my_view, 'You lost', 'Your score: ' + str(self.human_score), 'ok', None)
+                pop_up_view.display_menu()
 
     def update_human_score(self):
         for player in self.players:
@@ -89,14 +90,14 @@ class GameManager(Manager):
         return True
 
     def load_config(self):
-        config_file = os.path.join(os.path.dirname(__file__), '../../resources/neat.conf')
+        config_file = os.path.join(constant.ROOT_DIR, constant.PATH_NEAT_CONF)
         config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                     neat.DefaultSpeciesSet, neat.DefaultStagnation,
                                     config_file)
         return config
 
     def load_best_genome(self):
-        path = os.path.join(os.path.dirname(__file__), '../../resources/best_genome.dat')
+        path = os.path.join(constant.ROOT_DIR, constant.PATH_BEST_GENOME)
         try:
             with open(path, 'rb') as f:
                 genome = pickle.load(f)

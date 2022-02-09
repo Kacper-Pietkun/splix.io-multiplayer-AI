@@ -1,12 +1,13 @@
 import threading
 import pygame
 from src.players.human_player import HumanPlayer
-from src.management.manager import Manager
+from src.management.game_managers.manager import Manager
 from src.constants import constant
 from src.network.protocol.player_serializable import PlayerSerializable
 from src.network.protocol.board_serializable import BoardSerializable
 
 
+# For single online multiplayer games
 class NetworkGameManager(Manager):
     def __init__(self, max_fps):
         super().__init__(max_fps, None)

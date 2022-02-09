@@ -4,6 +4,7 @@ from src.constants import constant
 
 class Window:
     def __init__(self, width, height):
+        pygame.init()
         self.width = width
         self.height = height
         self.screen = pygame.display.set_mode((constant.WINDOW_WIDTH, constant.WINDOW_HEIGHT))

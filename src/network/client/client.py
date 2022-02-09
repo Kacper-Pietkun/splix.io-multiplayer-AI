@@ -9,12 +9,13 @@ from src.exceptions.end_of_game_exception import EndOfGameException
 
 
 class Client:
-    def __init__(self, server_ip, port, window, main_menu):
+    def __init__(self, server_ip, port, window, my_view):
         self.server_ip = server_ip
         self.port = port
-        self.connection = ClientConnection(server_ip, port)
         self.window = window
-        self.main_menu = main_menu
+        self.my_view = my_view
+        self.connection = ClientConnection(server_ip, port)
+
         self.is_game_running = False
         self.player_id = None
         self.serialized_players = None
@@ -23,16 +24,9 @@ class Client:
         self.my_exception = None
 
     def join_game(self, client_name):
-        try:
-            self.player_id = self.connection.initial_data_exchange(client_name)
-            self.waiting_phase()
-            self.game_phase()
-        except (SocketException, ConnectionResetError, ConnectionAbortedError) as e:
-            self.connection.my_socket.close()
-            self.main_menu.display_pop_up('Connection status', 'Lost connection', 'ok', None)
-        except EndOfGameException as e:
-            self.connection.my_socket.close()
-            self.main_menu.display_pop_up('You lost', 'Your score: ' + str(self.final_score), 'ok', None)
+        self.player_id = self.connection.initial_data_exchange(client_name)
+        self.waiting_phase()
+        self.game_phase()
 
     def waiting_phase(self):
         iteration = 0

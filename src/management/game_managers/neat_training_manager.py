@@ -1,19 +1,19 @@
 import os
 import sys
-
 import neat
 import pygame
 import pickle
-import src.gui.visualize as visualize
+import src.neat_statistics.visualize as visualize
 from math import inf
 from src.constants import constant
 from src.players.neat_bot import NeatBot
 from src.players.heuristic_bot import HeuristicBot
-from src.management.manager import Manager
+from src.management.game_managers.manager import Manager
 from random import randint
 
 
-class NeatManager(Manager):
+# Not for game but for training neat bots
+class NeatTrainingManager(Manager):
     def __init__(self, max_fps, visualize_training, window):
         super().__init__(max_fps, window)
         self.generation = 0
@@ -25,7 +25,7 @@ class NeatManager(Manager):
         self.statistics = None
 
     def load_population(self):
-        path = os.path.join(os.path.dirname(__file__), '../../resources/population.dat')
+        path = os.path.join(constant.ROOT_DIR, constant.PATH_NEAT_POPULATION)
         try:
             with open(path, 'rb') as f:
                 self.population = pickle.load(f)
@@ -37,9 +37,7 @@ class NeatManager(Manager):
             raise
 
     def run(self):
-        local_dir = os.path.dirname(__file__)
-        config_file = os.path.join(local_dir, '../../resources/neat.conf')
-
+        config_file = os.path.join(constant.ROOT_DIR, constant.PATH_NEAT_CONF)
         self.config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                                          config_file)
@@ -131,10 +129,10 @@ class NeatManager(Manager):
     def save_current_progress(self, genomes):
         local_dir = os.path.dirname(__file__)
 
-        path = os.path.join(local_dir, '../../resources/population.dat')
+        path = os.path.join(constant.ROOT_DIR, constant.PATH_NEAT_POPULATION)
         self.save_object(self.population, path)
 
-        path = os.path.join(local_dir, '../../resources/best_genome.dat')
+        path = os.path.join(constant.ROOT_DIR, constant.PATH_BEST_GENOME)
         self.save_object(self.get_best_genome(genomes), path)
 
         print("Exporting population and best genome")
@@ -170,9 +168,9 @@ class NeatManager(Manager):
         return best_genome
 
     def save_best_neural_network_image(self, genomes):
-        path = os.path.join(os.path.dirname(__file__), '../../resources/net')
+        path = os.path.join(constant.ROOT_DIR, constant.PATH_NET_VISUALIZATION)
         visualize.draw_net(self.config, self.get_best_genome(genomes), filename=path)
 
     def save_statistics(self):
-        path = os.path.join(os.path.dirname(__file__), '../../resources/avg_fitness.svg')
+        path = os.path.join(constant.ROOT_DIR, constant.PATH_AVERAGE_FITNESS_CHART)
         visualize.plot_stats(statistics=self.statistics, filename=path)
