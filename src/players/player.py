@@ -5,13 +5,14 @@ from src.constants import constant
 
 class Player:
 
-    def __init__(self, board, game_manager, player_id):
+    def __init__(self, board, game_manager, player_id, name):
         self.id = player_id  # First player starts with id = 1, because id = 0 is reserved for neutral state
         self.board = board
         self.game_manager = game_manager
         self.tile_color = (randint(50, 205), randint(50, 205), randint(50, 205))
         self.player_color = tuple(map(add, self.tile_color, (randint(-50, -30), randint(-50, -30), randint(-50, -30))))
         self.trail_color = tuple(map(add, self.tile_color, (randint(30, 50), randint(30, 50), randint(30, 50))))
+        self.name = name
         self.safe_zone_positions = set()
         self.x, self.y = self.spawn_on_random_position()
         self.direction = constant.DIRECTION_NONE

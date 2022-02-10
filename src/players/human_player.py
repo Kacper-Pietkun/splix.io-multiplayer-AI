@@ -5,8 +5,8 @@ import pygame
 
 class HumanPlayer(Player):
 
-    def __init__(self, board, game_manager, player_id):
-        super().__init__(board, game_manager, player_id)
+    def __init__(self, board, game_manager, player_id, name):
+        super().__init__(board, game_manager, player_id, name)
 
     def action(self, pressed_key):
         self.change_direction(pressed_key)

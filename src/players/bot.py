@@ -5,8 +5,8 @@ from math import sqrt
 
 class Bot(Player):
 
-    def __init__(self, board, game_manager, player_id):
-        super().__init__(board, game_manager, player_id)
+    def __init__(self, board, game_manager, player_id, name):
+        super().__init__(board, game_manager, player_id, name)
 
     # abstract method
     def action(self, pressed_key):

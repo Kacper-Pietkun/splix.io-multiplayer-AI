@@ -37,8 +37,7 @@ class NetworkGameManager(Manager):
         print('register player with name: ', client_name)
         with self.lock:
             self.current_player_id += 1
-            new_player = HumanPlayer(self.board, self, self.current_player_id)
-            new_player.name = client_name
+            new_player = HumanPlayer(self.board, self, self.current_player_id, client_name)
             self.players.append(new_player)
             returned_id = self.current_player_id
         return returned_id

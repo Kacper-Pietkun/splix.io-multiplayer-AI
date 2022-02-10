@@ -5,8 +5,8 @@ from math import sqrt, inf
 
 
 class NeatBot(Bot):
-    def __init__(self, board, game_manager, genome, net, player_id):
-        super().__init__(board, game_manager, player_id)
+    def __init__(self, board, game_manager, genome, net, player_id, name):
+        super().__init__(board, game_manager, player_id, name)
         self.genome = genome
         self.net = net
         self.time_alive = 0

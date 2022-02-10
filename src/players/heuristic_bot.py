@@ -7,8 +7,8 @@ from random import randint
 
 class HeuristicBot(Bot):
 
-    def __init__(self, board, game_manager, safe_offset, player_id):
-        super().__init__(board, game_manager, player_id)
+    def __init__(self, board, game_manager, safe_offset, player_id, name):
+        super().__init__(board, game_manager, player_id, name)
         self.safe_offset = safe_offset  # used for determining whether player should move back to the safe zone
         self.is_following_a_path = False
         self.optimal_path = []

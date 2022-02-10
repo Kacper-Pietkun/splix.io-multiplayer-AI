@@ -14,10 +14,10 @@ from src.gui.gui_view.pop_up_view import PopUpView
 
 # For single player games
 class GameManager(Manager):
-    def __init__(self, bots_mode, max_fps, no_of_all_bots, window, my_view):
+    def __init__(self, bots_mode, max_fps, no_of_all_bots, window, my_view, player_name):
         super().__init__(max_fps, window)
         player_id = 1
-        self.players.append(HumanPlayer(self.board, self, player_id))
+        self.players.append(HumanPlayer(self.board, self, player_id, player_name))
         self.human_score = 0
         self.my_view = my_view
         player_id += 1
@@ -34,13 +34,16 @@ class GameManager(Manager):
 
         if bots_mode == constant.MODE_HEURISTIC_BOTS_ONLY or bots_mode == constant.MODE_BOTH_BOTS_ONLY:
             for i in range(0, heuristic_bots_number):
-                self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, player_id))
+                self.players.append(HeuristicBot(self.board, self, constant.HEURISTIC_BOT_SAFE_OFFSET, player_id,
+                                                 constant.HEURISTIC_BOT_PREFIX_NAME + str(player_id)))
                 player_id += 1
                 if bots_mode == constant.MODE_BOTH_BOTS_ONLY and constant.DISTINGUISH_HEURISTIC_AND_NEAT_BOTS:
                     white_shade = randint(200, 230)
-                    self.players[-1].change_color_set_on_fly(player_color=(white_shade - 25, white_shade - 25, white_shade - 25),
+                    self.players[-1].change_color_set_on_fly(player_color=(white_shade - 25, white_shade - 25,
+                                                                           white_shade - 25),
                                                              tile_color=(white_shade, white_shade, white_shade),
-                                                             trail_color=(white_shade + 25, white_shade + 25, white_shade + 25))
+                                                             trail_color=(white_shade + 25, white_shade + 25,
+                                                                          white_shade + 25))
 
         if bots_mode == constant.MODE_NEAT_BOTS_ONLY or bots_mode == constant.MODE_BOTH_BOTS_ONLY:
             try:
@@ -51,7 +54,8 @@ class GameManager(Manager):
                 raise
             for i in range(0, neat_bots_number):
                 net = neat.nn.FeedForwardNetwork.create(best_genome, config)
-                self.players.append(NeatBot(self.board, self, best_genome, net, player_id))
+                self.players.append(NeatBot(self.board, self, best_genome, net, player_id,
+                                            constant.NEAT_BOT_PREFIX_NAME + str(player_id)))
                 player_id += 1
 
     def run(self):
