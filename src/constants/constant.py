@@ -5,7 +5,6 @@ from pathlib import Path
 # Game
 GAME_MAX_FPS = 60
 All_BOTS_NUMBER = 30
-ARE_HEURISTIC_AGGRESSIVE = False
 DISTINGUISH_HEURISTIC_AND_NEAT_BOTS = True
 MULTIPLAYER_MAX_NO_OF_PLAYERS = 13
 MINIMAL_NUMBER_OF_PLAYER_TO_START = 2
@@ -49,6 +48,7 @@ HEURISTIC_BOT_FIND_KILL_OFFSET = 2  # Bot will search for other bots that he can
 HEURISTIC_BOT_SAFE_OFFSET = 5  # variable that helps to decide whether bot is in danger and should go to the safe zone
 HEURISTIC_BOT_WANDER_LENGTH = 5  # If bot's trail is longer than given value, he goes back to the safe zone
 HEURISTIC_BOT_GO_OUT_OF_SAFE_ZONE_CONDITION = 5  # variable that helps decide whether bot is safe to leave the safe zone
+ARE_HEURISTIC_AGGRESSIVE = True
 
 # Paths
 ROOT_DIR = Path(__file__).parent.parent.parent
@@ -67,7 +67,7 @@ MAX_UDP_PACKET_SIZE = 16384
 # CHANGE IF YOU WANT
 # **********************************************************************************************************************
 # Neat bot
-NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 10  # Add some heuristic bots, that will compete with neat bots while training
+NUMBER_OF_HEURISTIC_BOTS_FOR_TRAINING = 75  # Add some heuristic bots, that will compete with neat bots while training
 TRAINING_MAX_FPS = 0  # zero means it will be as fast as it can
 VISUALIZE_TRAINING = False  # You can visualize training, however it slows down the whole process
 SAVE_NEURAL_NETWORK_IMAGE_BEST_GENOME = True

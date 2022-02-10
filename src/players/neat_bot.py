@@ -1,7 +1,8 @@
 from src.players.bot import Bot
 from src.constants import constant
-from random import randint
 from math import sqrt, inf
+import numpy as np
+from neat.math_util import softmax
 
 
 class NeatBot(Bot):
@@ -25,6 +26,8 @@ class NeatBot(Bot):
         if (self.zone_time > 200 and self.genome.fitness == 0) or self.zone_time > 1000:
             if self.genome.fitness >= 0:
                 self.genome.fitness = sqrt(self.genome.fitness)  # player is punished for dying because of stagnation
+            else:
+                self.genome.fitness = -10  # player didn't move out of his safe zone at all, so we have to punish it
             self.game_manager.kill_player(self.id)
 
         self.determine_next_move()
@@ -36,31 +39,42 @@ class NeatBot(Bot):
             inputs = self.get_inputs()
             outputs = self.net.activate(inputs)
 
+            # since neat doesn't come with softmax, we have to handle it ourselves
+            # All of the nodes has got activation function from neat.conf, but the last one is additionally
+            # treated with softmax to decide which relative direction bot should go
+            softmax_result = softmax(outputs)
+            class_output = np.argmax(((softmax_result / np.max(softmax_result)) == 1).astype(int))
+
             relative_left = self.get_relative_direction(constant.DIRECTION_LEFT)
             relative_right = self.get_relative_direction(constant.DIRECTION_RIGHT)
-            output = outputs[0]
 
-            if output > 0.7:
-                self.direction = relative_left
-            elif output < -0.7:
+            if class_output == 0:
+                self.direction = self.direction
+            elif class_output == 1:
                 self.direction = relative_right
+            elif class_output == 2:
+                self.direction = relative_left
 
     def get_inputs(self):
+        input_list = []
+
+        # distances to the border in every direction
         dist_straight_map_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_UP)
         dist_left_map_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_LEFT)
         dist_right_map_border = self.get_distance_to_wall_in_relative_direction(constant.DIRECTION_RIGHT)
+        input_list.extend([int(dist_straight_map_border), int(dist_left_map_border), int(dist_right_map_border)])
 
+        # distance to the edge of the safe zone if player is inside the safe zone, otherwise it is 0
         dist_safe_zone_border_straight = \
             self.get_distance_to_safe_zone_border_from_inside_in_relative_direction(constant.DIRECTION_UP)
         dist_safe_zone_border_left = \
             self.get_distance_to_safe_zone_border_from_inside_in_relative_direction(constant.DIRECTION_LEFT)
         dist_safe_zone_border_right = \
             self.get_distance_to_safe_zone_border_from_inside_in_relative_direction(constant.DIRECTION_RIGHT)
+        input_list.extend([int(dist_safe_zone_border_straight), int(dist_safe_zone_border_left),
+                           int(dist_safe_zone_border_right)])
 
-        dist_straight_map_border = 0 if (dist_straight_map_border != 1) else dist_straight_map_border
-        dist_left_map_border = 0 if (dist_left_map_border != 1) else dist_left_map_border
-        dist_right_map_border = 0 if (dist_right_map_border != 1) else dist_right_map_border
-
+        # calculating distance to the closest enemy and to the safe zone after simulating move in given direction
         current_x = self.x
         current_y = self.y
         current_direction = self.direction
@@ -78,14 +92,11 @@ class NeatBot(Bot):
             self.x = current_x  # reset bot's position and direction
             self.y = current_y
             self.direction = current_direction
-
-        input_list = []
         input_list.extend(distances_to_enemies)
         input_list.extend(distances_to_safe_zone)
 
-        input_list.extend([int(dist_straight_map_border), int(dist_left_map_border), int(dist_right_map_border),
-                           int(dist_safe_zone_border_straight), int(dist_safe_zone_border_left),
-                           int(dist_safe_zone_border_right), self.zone_time]) # , int(self.is_out_of_safe_zone)
+        # adding information whether player is in his safe zone or not
+        input_list.extend([int(self.is_out_of_safe_zone)])
 
         return input_list
 
@@ -133,7 +144,7 @@ class NeatBot(Bot):
         # constant.DIRECTION_LEFT - go left
         # constant.DIRECTION_RIGHT - go right
         if self.direction == constant.DIRECTION_NONE:
-            self.direction = randint(1, 4)
+            self.direction = constant.DIRECTION_UP
         if direction == constant.DIRECTION_UP:
             return self.direction
         if direction == constant.DIRECTION_LEFT:
